@@ -1,20 +1,19 @@
-// animado.js — Red animada de Cerámicas Ribera del Tajo (estilo cartoon).
-// Modo libre (el alumno toca las cajas del pedido o lo ya montado) y modo clase (el profesor avanza paso a paso).
+// animado.js — Escena animada paso a paso en estilo cartoon (la red de Cerámicas, el armario rack…).
+// Modo libre (el alumno toca las cajas o lo ya montado) y modo clase (el profesor avanza paso a paso).
+// Recibe la definición de la escena (E): construir(), ORDEN, VISTAS, contador (hud) y textos.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { h } from '../util.js';
 import { animar, esperar, ease, actualizarAnimaciones, cancelarAnimaciones, alMomento, velocidad } from '../animado/anim.js';
-import { construirRed, animarRed, ORDEN, VISTAS, PRESUPUESTO, NAVES } from '../animado/red.js';
 import { TINTA, SELECCION } from '../animado/toon.js';
 
 const LENTO = 2.2;
-const miles = n => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-const euros = n => miles(n) + ' €';
-
-export async function vistaAnimado() {
+export async function vistaAnimado(E) {
+  const { ORDEN, VISTAS, hud: HUD, textos: T } = E;
+  const MAXIMO = HUD.max;
   /* ---------- Interfaz ---------- */
-  const lienzo = h('canvas.am-lienzo', { 'aria-label': 'Maqueta en 3D del polígono con las tres naves y la tienda. Usa la lista de pasos para seleccionar.' });
-  const pista = h('p.am-pista', 'Toca una caja del pedido · arrastra para girar · rueda para acercar');
+  const lienzo = h('canvas.am-lienzo', { 'aria-label': T.aria });
+  const pista = h('p.am-pista', T.pista);
   const pasos = h('ol.am-pasos');
   const progresoBarra = h('span'), cuenta = h('span.am-cuenta');
   const panel = h('aside.am-panel', { 'aria-label': 'Pasos de la instalación' },
@@ -32,8 +31,8 @@ export async function vistaAnimado() {
   // Presupuesto
   const pGastado = h('b'), pQueda = h('span'), pBarra = h('span'), pUltimo = h('div.rd-ultimo');
   const presu = h('div.rd-presu', { 'aria-live': 'polite' },
-    h('div.rd-presu-cab', 'Pedido a InfoTajo'),
-    h('div.rd-presu-cifra', pGastado, h('small', ' de ' + euros(PRESUPUESTO))),
+    h('div.rd-presu-cab', HUD.cab),
+    h('div.rd-presu-cifra', pGastado, h('small', ' de ' + HUD.fmt(MAXIMO))),
     h('div.rd-presu-barra', pBarra), pQueda, pUltimo);
 
   const aviso = h('div.am-aviso', { role: 'status' });
@@ -56,13 +55,13 @@ export async function vistaAnimado() {
     h('div.am-clase-controles', bAnt, bRep, bSig, bMal, bVel, bSalir));
 
   const dialogo = h('dialog.am-final',
-    h('h2', '¡Red terminada!'),
-    h('p', 'Armarios, cable y tomas, puestos, switches, servidor, impresora, Wi‑Fi, fibra entre naves e Internet. Cumple R1 a R4 y se queda en 29.285 €, por debajo de los 30.000 €. Es una solución posible: hay otras igual de válidas.'),
+    h('h2', T.finTitulo),
+    h('p', T.finTexto),
     h('div.am-ficha-botones',
       h('button.am-btn.am-principal', { type: 'button', onclick: () => { dialogo.close(); construir([], true); } }, 'Volver a empezar'),
       h('button.am-btn', { type: 'button', onclick: () => dialogo.close() }, 'Seguir mirando')));
 
-  const escenaEl = h('div.am-escena.rd-escena', lienzo, capaRotulos, pista, panel, presu, ficha, aviso, tooltip, capaBurbujas, destello, barraClase, sin3d, dialogo);
+  const escenaEl = h('div.am-escena.rd-escena' + (T.clase ? '.' + T.clase : ''), lienzo, capaRotulos, pista, panel, presu, ficha, aviso, tooltip, capaBurbujas, destello, barraClase, sin3d, dialogo);
 
   const bClase = h('button.btn.azul', { type: 'button', onclick: () => entrarClase() }, 'Modo clase (proyector)');
   const bVista = h('button.btn.sec', { type: 'button', onclick: () => irA(VISTAS.general.pos, VISTAS.general.obj) }, 'Vista general');
@@ -71,8 +70,7 @@ export async function vistaAnimado() {
 
   const el = h('div.animado',
     h('div.am-cab',
-      h('div', h('span.etiqueta', 'Proyecto · Tema 1'), h('h1', 'La red de Cerámicas Ribera del Tajo'),
-        h('p.lead', 'Una solución posible del proyecto, montada paso a paso: qué se compra, dónde va cada cosa y qué pasa si te equivocas.')),
+      h('div', h('span.etiqueta', T.etiqueta), h('h1', T.titulo), h('p.lead', T.lead)),
       h('div.fila', bClase, bVista, bNuevo, bLento)),
     escenaEl,
     h('p.am-atajos', 'Modo clase con teclado o presentador: ', h('kbd', '→'), ' o ', h('kbd', 'espacio'), ' siguiente · ', h('kbd', '←'), ' anterior · ', h('kbd', 'R'), ' repetir · ', h('kbd', 'M'), ' error · ', h('kbd', 'L'), ' lento · ', h('kbd', 'Esc'), ' salir'));
@@ -109,22 +107,22 @@ export async function vistaAnimado() {
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     escena = new THREE.Scene();
-    escena.background = new THREE.Color(0xdcecf4);
+    escena.background = new THREE.Color(E.fondo || 0xdcecf4);
     camara = new THREE.PerspectiveCamera(36, 1, 1, 900);
     camara.position.copy(VISTAS.general.pos);
     controles = new OrbitControls(camara, lienzo);
     controles.target.copy(VISTAS.general.obj);
     controles.enableDamping = true;
     controles.maxPolarAngle = 1.3;
-    controles.minDistance = 10;
-    controles.maxDistance = 280;
+    controles.minDistance = (E.distancias || [10, 280])[0];
+    controles.maxDistance = (E.distancias || [10, 280])[1];
 
     escena.add(new THREE.AmbientLight(0xffffff, 1.2));
     const sol = new THREE.DirectionalLight(0xfff4e0, 2.2);
     sol.position.set(-60, 110, 70);
     sol.castShadow = true;
     sol.shadow.mapSize.set(2048, 2048);
-    Object.assign(sol.shadow.camera, { left: -95, right: 95, top: 85, bottom: -85, near: 1, far: 320 });
+    const sb = E.sombra || 95; Object.assign(sol.shadow.camera, { left: -sb, right: sb, top: sb * 0.9, bottom: -sb * 0.9, near: 1, far: 320 });
     sol.target.position.set(0, 0, 0);
     escena.add(sol.target);
     sol.shadow.bias = -0.0008;
@@ -149,7 +147,7 @@ export async function vistaAnimado() {
         p.hover += (meta - p.hover) * Math.min(1, dt * 12);
         p.cuerpo.position.y = p.hover + p.salto;
       }
-      if (R) animarRed(R, raiz, dt);
+      if (R && E.animar) E.animar(R, raiz, dt);
       for (let i = particulas.length - 1; i >= 0; i--) {
         const q = particulas[i];
         q.v.y -= q.g * dt;
@@ -191,12 +189,11 @@ export async function vistaAnimado() {
     rotulos.splice(0).forEach(r => r.el.remove());
     raiz = new THREE.Group();
     escena.add(raiz);
-    const red = construirRed();
+    const red = E.construir();
     P = red.P; R = red.R;
     raiz.add(red.escenario);
     for (const p of Object.values(P)) raiz.add(p.grupo, p.fijo);
-    for (const n of Object.values(NAVES)) rotulo(n.nombre, n.c.clone().add(new THREE.Vector3(0, 3.4, -n.D / 2)), 'nave');
-    rotulo('Pedido de InfoTajo (muelle de carga)', new THREE.Vector3(0, 7.5, 54), 'nave');
+    (E.rotulos || []).forEach(([t, pos, c]) => rotulo(t, pos, c));
     hecho = new Set(); seleccion = null; encima = null; mensajeMal = null; extra = 0;
     if (!clase) cerrarFicha();
     ocupado = true;
@@ -282,7 +279,8 @@ export async function vistaAnimado() {
       const m = new THREE.Mesh(geoChispa, matChispa[i % 3]);
       m.position.copy(pos);
       escena.add(m);
-      particulas.push({ m, v: new THREE.Vector3((Math.random() - 0.5) * 22 * f, (Math.random() * 16 + 5) * f, (Math.random() - 0.5) * 22 * f), vida: 0.6 + Math.random() * 0.5, g: 34, giro: 10 });
+      const k = E.escala || 1; m.scale.setScalar(Math.max(0.4, k));
+      particulas.push({ m, v: new THREE.Vector3((Math.random() - 0.5) * 22 * f * k, (Math.random() * 16 + 5) * f * k, (Math.random() - 0.5) * 22 * f * k), vida: 0.6 + Math.random() * 0.5, g: 34 * k, giro: 10 });
     }
     luzChispa.position.copy(pos).add(new THREE.Vector3(0, 2, 0));
     animar(700, t => { luzChispa.intensity = 1500 * f * (1 - t); }, ease.salida);
@@ -294,7 +292,7 @@ export async function vistaAnimado() {
     const c = controles.target;
     for (let i = 0; i < 220; i++) {
       const m = new THREE.Mesh(geoConfeti, colConfeti[i % colConfeti.length]);
-      m.position.set(c.x + (Math.random() - 0.5) * 110, 40 + Math.random() * 20, c.z + (Math.random() - 0.5) * 80);
+      const k = E.escala || 1; m.position.set(c.x + (Math.random() - 0.5) * 110 * k, c.y + (40 + Math.random() * 20) * k, c.z + (Math.random() - 0.5) * 80 * k); m.scale.setScalar(Math.max(0.35, k));
       m.rotation.set(Math.random() * 6, Math.random() * 6, 0);
       escena.add(m);
       particulas.push({ m, v: new THREE.Vector3((Math.random() - 0.5) * 8, -Math.random() * 6, (Math.random() - 0.5) * 8), vida: 4 + Math.random() * 2, g: 7, giro: 5, freno: true });
@@ -305,11 +303,11 @@ export async function vistaAnimado() {
   function pintarPresupuesto(animado) {
     const objetivo = gastado + extra;
     const pinta = v => {
-      pGastado.textContent = euros(Math.round(v));
-      const pasa = v > PRESUPUESTO;
+      pGastado.textContent = HUD.fmt(v);
+      const pasa = v > MAXIMO;
       presu.classList.toggle('pasado', pasa);
-      pBarra.style.width = Math.min(100, (v / PRESUPUESTO) * 100) + '%';
-      pQueda.textContent = pasa ? 'Te pasas en ' + euros(Math.round(v - PRESUPUESTO)) : 'Quedan ' + euros(Math.round(PRESUPUESTO - v));
+      pBarra.style.width = Math.min(100, (v / MAXIMO) * 100) + '%';
+      pQueda.textContent = pasa ? HUD.pasa(v - MAXIMO) : HUD.queda(MAXIMO - v);
     };
     if (!animado || velocidad.instantaneo) { mostrado = objetivo; pinta(objetivo); return; }
     const desde = mostrado;
@@ -317,12 +315,10 @@ export async function vistaAnimado() {
   }
   function anunciarCompra(p) {
     if (!p.compra.length) { pUltimo.replaceChildren(); return; }
-    pUltimo.replaceChildren(...p.compra.map(([cod, nom, n, total]) => h('div', h('b', cod), ` × ${miles(n)}${cod === 'FO-02' ? ' m' : ''} · ${euros(total)}`)));
+    pUltimo.replaceChildren(...p.compra.map(l => h('div', h('b', l[0]), HUD.resto(l))));
     pUltimo.classList.remove('nuevo'); void pUltimo.offsetWidth; pUltimo.classList.add('nuevo');
   }
-  const lineaCompra = p => p.compra.length
-    ? 'Compra: ' + p.compra.map(([cod, , n, total]) => `${cod} × ${miles(n)}${cod === 'FO-02' ? ' m' : ''}${total ? ' (' + euros(total) + ')' : ''}`).join(' · ')
-    : '';
+  const lineaCompra = p => p.compra.length ? HUD.prefijo + p.compra.map(l => l[0] + HUD.resto(l)).join(' · ') : '';
 
   /* ---------- Lógica de pasos ---------- */
   const faltan = p => p.requiere.filter(r => !hecho.has(r));
@@ -428,8 +424,7 @@ export async function vistaAnimado() {
     ficha.hidden = false;
     fTitulo.textContent = p.nombre;
     fTexto.textContent = p.texto;
-    fCompra.replaceChildren(...p.compra.map(([cod, nom, n, total]) =>
-      h('li', h('b', cod), ' ', nom, h('span', ` × ${miles(n)} · ${total ? euros(total) : 'incluido'}`))));
+    fCompra.replaceChildren(...p.compra.map(l => h('li', h('b', l[0]), ' ', l[1], h('span', HUD.resto(l)))));
     fCompra.hidden = !p.compra.length;
     const falta = faltan(p);
     fReq.hidden = !(falta.length && !p.montado);
@@ -466,8 +461,8 @@ export async function vistaAnimado() {
       cCompra.textContent = lineaCompra(p);
     } else {
       cPaso.textContent = 'Terminado';
-      cTitulo.textContent = '¡Red terminada: 29.285 €!';
-      cTexto.textContent = 'Armarios, cable y tomas, puestos, switches, servidor, impresora, Wi‑Fi, fibra entre naves e Internet. Cada nave en estrella y la red completa en árbol. Una avería en el taller no tumba las oficinas (R1). Es una solución posible: hay otras válidas.';
+      cTitulo.textContent = T.claseFinTitulo;
+      cTexto.textContent = T.claseFinTexto;
       cCompra.textContent = '';
     }
     bAnt.disabled = ocupado || n === 0;

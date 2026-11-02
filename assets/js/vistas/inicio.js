@@ -11,5 +11,6 @@ export function vistaInicio() {
       h('p.lead', 'Diseña la red de una empresa: qué se compra, dónde va cada cosa y por qué. Empieza viendo cómo se monta una red completa paso a paso.')),
     h('div.rejilla', { style: 'margin-top:28px' },
       tarjeta('#/animado', '1', 'Red animada', 'La red de Cerámicas Ribera del Tajo montada paso a paso, con el presupuesto y los errores típicos.', 'Disponible'),
-      tarjeta('#/practica', '2', 'Práctica', 'Te toca una empresa distinta cada vez: clasifica sus redes, diséñala sobre el plano, haz la compra y prueba las averías. La web te corrige.', 'Sin nota'))) };
+      tarjeta('#/rack', '2', 'Armario rack', 'Monta el armario de un aula de 20 puestos: panel de parcheo, pasahilos, switch, SAI y regleta, en su U. Tema 2.', 'Disponible'),
+      tarjeta('#/practica', '3', 'Práctica', 'Te toca una empresa distinta cada vez: clasifica sus redes, diséñala sobre el plano, haz la compra y prueba las averías. La web te corrige.', 'Sin nota'))) };
 }

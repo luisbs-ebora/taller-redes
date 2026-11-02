@@ -3,6 +3,7 @@ import { h } from './util.js';
 import { vistaInicio } from './vistas/inicio.js';
 import { vistaAnimado } from './vistas/animado.js';
 import { vistaDisenio } from './vistas/disenio.js';
+import { ESCENA_RED, ESCENA_RACK } from './animado/escenas.js';
 
 const main = document.getElementById('contenido');
 let actual = null;
@@ -18,7 +19,8 @@ function vistaCreditos() {
 const RUTAS = [
   [/^$/, () => vistaInicio()],
   [/^creditos$/, () => vistaCreditos()],
-  [/^animado$/, () => vistaAnimado()],
+  [/^animado$/, () => vistaAnimado(ESCENA_RED)],
+  [/^rack$/, () => vistaAnimado(ESCENA_RACK)],
   [/^(practica|examen)$/, m => vistaDisenio(m[1])],
 ];
 

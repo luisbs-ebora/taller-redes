@@ -54,3 +54,6 @@
 .rd-rotulo.nave span { font: 700 13px var(--f-texto); background: rgba(255,250,240,.92); color: var(--c-tinta); border: 2px solid var(--c-tinta); animation: none; }
 .am-escena.clase .rd-rotulo.nave span { font-size: 15px; }
 .rd-rotulo.estrella span { background: #e3a23b; color: #1d1b24; }
+.rd-rotulo.u span { font: 700 11px var(--f-mono); padding: 1px 5px; background: rgba(29,27,36,.75); border-width: 1.5px; animation: none; }
+.rd-rotulo.puerto span { font: 800 12px var(--f-mono); padding: 1px 6px; background: #ffd23f; color: #1d1b24; border-color: #1d1b24; }
+.am-escena.clase .rd-rotulo.u span { font-size: 13px; }
