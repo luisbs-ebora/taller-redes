@@ -1,0 +1,92 @@
+/* Práctica y examen: «Diseña la red» */
+.disenio .lead { font-size: 19px; color: var(--tinta-2); max-width: 70ch; margin: 10px 0 0; }
+.lead.peq { font-size: 17px; margin: 0 0 14px; }
+.campo { font: inherit; font-size: 16px; padding: 8px 10px; border: 2px solid var(--linea); border-radius: 10px; background: var(--superficie); color: var(--tinta); min-height: 42px; width: 100%; }
+.campo:focus { border-color: var(--azul); outline: none; }
+.dz-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 18px; border-bottom: 2px solid var(--linea); }
+.dz-tabs button { border: 0; background: none; cursor: pointer; font: 700 16px var(--f-texto); color: var(--tinta-2); padding: 10px 14px; border-radius: 10px 10px 0 0; margin-bottom: -2px; border-bottom: 3px solid transparent; }
+.dz-tabs button:hover { color: var(--tinta); background: var(--papel-2); }
+.dz-tabs button[aria-selected="true"] { color: var(--azul); border-bottom-color: var(--azul); }
+.dz-cuerpo { min-height: 320px; }
+.dz-cuerpo h3 { margin: 22px 0 8px; }
+.dz-pie { position: sticky; bottom: 0; z-index: 3; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin-top: 26px; padding: 12px 16px; background: color-mix(in srgb, var(--superficie) 94%, transparent); backdrop-filter: blur(8px); border: 1px solid var(--linea); border-radius: 14px; box-shadow: var(--sombra); }
+.dz-total { display: flex; align-items: baseline; gap: 8px; }
+.dz-total span { font: 500 13px var(--f-mono); text-transform: uppercase; color: var(--tinta-2); }
+.dz-total b { font: 800 24px var(--f-titulo); }
+.dz-total small { color: var(--tinta-2); }
+.dz-total.pasa b { color: var(--mal); }
+.dz-req { padding-left: 22px; } .dz-req li { margin: 6px 0; }
+.dz-encargo .tabla th { width: 26%; }
+.dz-tipos td:first-child { min-width: 260px; }
+.dz-tipos select { min-width: 150px; }
+
+.dz-plano-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, 1fr); gap: 22px; align-items: start; }
+@media (max-width: 960px) { .dz-plano-grid { grid-template-columns: 1fr; } }
+.dz-plano { width: 100%; height: auto; display: block; background: var(--superficie); border: 1px solid var(--linea); border-radius: 16px; }
+.dz-plano .recinto { fill: color-mix(in srgb, #9fd38a 30%, var(--superficie)); stroke: #7fbf6c; stroke-width: 2; stroke-dasharray: 6 5; }
+.dz-plano .recinto-txt { font: 500 13px var(--f-mono); fill: #4d8a3d; }
+.dz-plano .enlace { stroke-width: 5; stroke-linecap: round; }
+.dz-plano .enlace.nada { stroke: #b9b2a3; stroke-width: 2; stroke-dasharray: 5 6; }
+.dz-plano .enlace.cobre { stroke: #4a86e8; }
+.dz-plano .enlace.fibra { stroke: #ff8a3d; stroke-width: 7; }
+.dz-plano .enlace.malo { stroke: var(--mal); stroke-dasharray: 10 7; }
+.dz-plano .dist { fill: var(--superficie); stroke: #b9b2a3; stroke-width: 2; }
+.dz-plano .dist.cobre { stroke: #4a86e8; } .dz-plano .dist.fibra { stroke: #ff8a3d; }
+.dz-plano .dist-txt { font: 700 14px var(--f-texto); fill: var(--tinta); }
+.dz-plano .wan { fill: none; stroke: #8b6fe0; stroke-width: 3; stroke-dasharray: 3 6; stroke-linecap: round; }
+.dz-plano .wan-txt { font: 700 13px var(--f-texto); fill: #8b6fe0; }
+.dz-plano .sede rect { fill: var(--superficie); stroke: var(--tinta); stroke-width: 2.5; }
+.dz-plano .sede.principal rect { stroke: var(--azul); stroke-width: 3.5; }
+.dz-plano .sede.ok rect { fill: var(--bien-2); stroke: var(--bien); }
+.dz-plano .sede.sin rect, .dz-plano .sede.caida rect { fill: var(--mal-2); stroke: var(--mal); }
+.dz-plano .nom { font: 800 16px var(--f-titulo); fill: var(--tinta); }
+.dz-plano .det { font: 500 13px var(--f-texto); fill: var(--tinta-2); }
+.dz-leyenda { display: flex; gap: 16px; flex-wrap: wrap; font-size: 14px; color: var(--tinta-2); margin: 8px 2px 0; }
+.dz-leyenda span::before { content: ''; display: inline-block; width: 26px; height: 5px; border-radius: 3px; margin-right: 6px; vertical-align: middle; }
+.dz-leyenda .l-cobre::before { background: #4a86e8; } .dz-leyenda .l-fibra::before { background: #ff8a3d; height: 7px; }
+.dz-leyenda .l-nada::before { background: repeating-linear-gradient(90deg, #b9b2a3 0 5px, transparent 5px 10px); height: 2px; }
+.dz-formas { display: grid; gap: 14px; }
+.dz-sede { border: 1px solid var(--linea); border-radius: 14px; padding: 10px 14px 14px; background: var(--superficie); margin: 0; display: grid; gap: 10px; }
+.dz-sede legend { font: 800 17px var(--f-titulo); padding: 0 6px; }
+.dz-campo { display: grid; gap: 4px; font-size: 15px; font-weight: 700; color: var(--tinta-2); }
+.dz-ayuda { font-size: 15px; color: var(--tinta-2); margin: 0; }
+.dz-botones { display: flex; flex-wrap: wrap; gap: 8px; }
+.dz-botones [aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--mal); color: var(--mal); }
+
+.dz-grupo h3 { margin-top: 18px; }
+.dz-cat td { vertical-align: middle; }
+.dz-cat td.cod { font: 500 14px var(--f-mono); white-space: nowrap; width: 80px; }
+.dz-cat td b { display: block; }
+.dz-cat td small { color: var(--tinta-2); font-size: 14px; }
+.dz-cat td.precio { white-space: nowrap; text-align: right; width: 90px; }
+.dz-cat td.cant { width: 150px; }
+.dz-cat td.cant .campo { width: 110px; }
+.dz-cat td.sub { width: 100px; text-align: right; font-weight: 700; white-space: nowrap; }
+.dz-cat tr.elegido { background: var(--azul-2); }
+
+.dz-dialogo { border: 1px solid var(--linea); border-radius: 18px; padding: 22px 24px; max-width: 460px; background: var(--superficie); color: var(--tinta); box-shadow: var(--sombra); }
+.dz-dialogo::backdrop { background: rgba(0,0,0,.35); }
+.dz-resumen { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; margin-bottom: 20px; }
+.dz-nota { padding: 16px 22px; display: flex; align-items: baseline; gap: 10px; }
+.dz-nota span { font: 500 13px var(--f-mono); text-transform: uppercase; color: var(--tinta-2); }
+.dz-nota b { font: 800 46px var(--f-titulo); }
+.dz-detalle { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
+.dz-detalle section { padding: 14px 16px; }
+.dz-detalle header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.dz-detalle .dz-pts { font: 700 15px var(--f-mono); }
+.dz-detalle .barra { max-width: none; margin: 8px 0 10px; }
+.dz-detalle ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font-size: 15px; }
+.dz-detalle li { display: flex; gap: 8px; }
+.dz-detalle li small { display: block; color: var(--tinta-2); margin-top: 2px; }
+.dz-detalle .ic { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font: 700 13px var(--f-texto); color: #fff; }
+.dz-detalle li.ok .ic { background: var(--bien); } .dz-detalle li.ko .ic { background: var(--mal); } .dz-detalle li.medio .ic { background: var(--ambar); }
+@media (min-width: 961px) { .dz-plano-grid > div:first-child { position: sticky; top: 90px; } }
+@media (max-width: 720px) {
+  .dz-tabs button { padding: 8px 9px; font-size: 14px; }
+  .dz-tipos td:first-child { min-width: 180px; }
+  .dz-cat td.cod, .dz-cat td.sub { display: none; }
+  .dz-cat td.cant { width: 96px; } .dz-cat td.cant .campo { width: 84px; }
+  .dz-total b { font-size: 20px; }
+  .dz-detalle { grid-template-columns: 1fr; }
+}

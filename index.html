@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Taller de Redes · 1.º SMR</title>
+  <meta name="description" content="Redes locales (1.º SMR): la red de una empresa montada paso a paso, prácticas de diseño de redes y examen.">
+  <meta name="theme-color" content="#f3ece0">
+  <link rel="icon" href="assets/img/icono.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@500&display=swap">
+  <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/animado.css">
+  <link rel="stylesheet" href="assets/css/red.css">
+  <link rel="stylesheet" href="assets/css/disenio.css">
+  <script type="importmap">
+  { "imports": {
+      "three": "./assets/vendor/three/three.module.min.js",
+      "three/addons/": "./assets/vendor/three/addons/"
+  } }
+  </script>
+</head>
+<body>
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+  <header class="cabecera">
+    <a class="marca" href="#/">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="12" y="3" width="8" height="7" rx="1.5" fill="var(--azul)"/><rect x="3" y="22" width="8" height="7" rx="1.5" fill="var(--ambar)"/><rect x="12" y="22" width="8" height="7" rx="1.5" fill="var(--ambar)"/><rect x="21" y="22" width="8" height="7" rx="1.5" fill="var(--ambar)"/><path d="M16 10v6M7 22v-6h18v6M16 16v6" stroke="var(--tinta)" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>
+      <span><b>Taller de Redes</b><small>1.º SMR · Redes locales</small></span>
+    </a>
+    <nav class="menu" aria-label="Secciones">
+      <a href="#/" data-ruta="inicio">Inicio</a>
+      <a href="#/animado" data-ruta="animado">Red animada</a>
+      <a href="#/practica" data-ruta="practica">Práctica</a>
+      <a href="#/examen" data-ruta="examen">Examen</a>
+    </nav>
+  </header>
+  <main id="contenido" tabindex="-1">
+    <div class="cargando">Cargando…</div>
+  </main>
+  <footer class="pie">
+    <span>Redes locales · Ébora Formación</span>
+    <a href="#/creditos">Créditos</a>
+  </footer>
+  <noscript><p class="aviso">Esta web necesita JavaScript.</p></noscript>
+  <script type="module" src="assets/js/main.js"></script>
+</body>
+</html>
