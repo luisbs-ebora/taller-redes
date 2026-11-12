@@ -39,3 +39,13 @@
 .mp-quiz { padding-left: 22px; } .mp-quiz li { margin: 0 0 14px; } .mp-quiz p { margin: 0 0 6px; }
 .mp-quiz .btn.ok { background: var(--bien); color: #fff; } .mp-quiz .btn.ko { background: var(--mal); color: #fff; }
 .mp-exp { color: var(--tinta-2); margin-top: 6px !important; } .mp-marcador { font-weight: 700; min-height: 1.4em; }
+
+/* Mapas más grandes: la página usa casi todo el ancho de la pantalla */
+main:has(> .mapas) { max-width: min(1900px, 97vw); }
+.mp-fig { padding: 12px 12px 14px; position: relative; }
+.mp-ampliar { float: right; margin: 0 0 6px 10px; }
+.mp-rejilla.apilado { grid-template-columns: 1fr; }
+.mp-nom { font-size: 12.5px; } .mp-chico { font-size: 11px; } .mp-tnom { font-size: 11px; } .mp-dentro { font-size: 12px; } .mp-sala { font-size: 13px; }
+.mp-fig:fullscreen { background: #fffdf7; padding: 2vh 2vw; display: flex; flex-direction: column; justify-content: center; border: 0; border-radius: 0; overflow: auto; }
+.mp-fig:fullscreen .mp-svg { max-height: 80vh; width: auto; max-width: 100%; margin: 0 auto; }
+.mp-fig:fullscreen .mp-leyenda { justify-content: center; font-size: 17px; }

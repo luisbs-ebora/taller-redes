@@ -88,7 +88,7 @@ function diagramaLogico() {
   linea(150, SWY, 330, SWY, 'mp-fibra'); linea(450, SWY, 630, SWY, 'mp-fibra');
   PCS.forEach((id, i) => linea(390, SWY + 16, 36 + i * 40, FILA - 14));
   [[540, 'IMP01'], [596, 'SRV01'], [662, 'AP01'], [730, 'AP02']].forEach(([x]) => linea(390, SWY + 16, x, FILA - 14));
-  [[640, 662], [684, 662], [718, 730], [760, 730]].forEach(([x, ax]) => linea(ax, FILA + 14, x, 396, 'mp-wifi'));
+  [[628, 662], [672, 662], [708, 730], [750, 730]].forEach(([x, ax]) => linea(ax, FILA + 14, x, 396, 'mp-wifi'));
   // nodos
   g('INTERNET', el('path', { d: 'M 350 58 a 16 16 0 0 1 8 -30 a 22 22 0 0 1 42 -6 a 18 18 0 0 1 30 16 a 14 14 0 0 1 -4 22 Z', class: 'mp-nube' }), txt(392, 46, 'Internet', 'mp-dentro'));
   g('R01', el('rect', { x: 340, y: 96, width: 100, height: 34, rx: 6, class: 'mp-rt' }), txt(390, 118, 'R01 · router', 'mp-dentro'));
@@ -100,7 +100,7 @@ function diagramaLogico() {
   g('IMP01', el('rect', { x: 516, y: FILA - 14, width: 48, height: 28, rx: 4, class: 'mp-imp' }), txt(540, FILA + 30, 'IMP01', 'mp-chico'));
   g('SRV01', el('rect', { x: 572, y: FILA - 14, width: 48, height: 28, rx: 4, class: 'mp-srv' }), txt(596, FILA + 44, 'SRV01', 'mp-chico'));
   [['AP01', 662], ['AP02', 730]].forEach(([id, x]) => g(id, el('circle', { cx: x, cy: FILA, r: 15, class: 'mp-ap' }), txt(x, FILA + 5, id.slice(2), 'mp-dentro'), txt(x + 26, FILA - 16, id, 'mp-chico')));
-  [['PORT01', 640], ['PORT02', 684], ['PORT03', 718], ['PORT04', 760]].forEach(([id, x], i) => g(id, el('rect', { x: x - 15, y: 396, width: 30, height: 20, rx: 3, class: 'mp-port' }), txt(x, 434 + (i % 2) * 14, id, 'mp-chico')));
+  [['PORT01', 628], ['PORT02', 672], ['PORT03', 708], ['PORT04', 750]].forEach(([id, x], i) => g(id, el('rect', { x: x - 15, y: 396, width: 30, height: 20, rx: 3, class: 'mp-port' }), txt(x, 434 + (i % 2) * 14, id, 'mp-chico')));
   return svg;
 }
 
@@ -126,6 +126,16 @@ export function vistaMapas() {
     svg.addEventListener('click', e => { const g = e.target.closest('.mp-el'); if (g) marcar(g.dataset.id); });
     svg.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { const g = e.target.closest('.mp-el'); if (g) { e.preventDefault(); marcar(g.dataset.id); } } });
   }
+  // Cada dibujo se puede ver a pantalla completa, y los dos se pueden poner uno debajo de otro (el doble de grandes)
+  const ampliar = () => h('button.btn.sec.peq.mp-ampliar', { type: 'button', onclick: e => {
+    const fig = e.currentTarget.closest('figure');
+    if (document.fullscreenElement) document.exitFullscreen(); else if (fig.requestFullscreen) fig.requestFullscreen().catch(() => {});
+  } }, '⛶ Pantalla completa');
+  let apilado = false;
+  try { apilado = localStorage.getItem('mapas:apilado') === '1'; } catch (e) {}
+  const bApilar = h('button.btn.sec.peq', { type: 'button', onclick: () => { apilado = !apilado; try { localStorage.setItem('mapas:apilado', apilado ? '1' : '0'); } catch (e) {} pintarApilado(); } });
+  const pintarApilado = () => { rejillaMapas.classList.toggle('apilado', apilado); bApilar.textContent = apilado ? '◫ Ponerlos lado a lado' : '▤ Más grandes: uno debajo de otro'; };
+  let rejillaMapas;
   const leyenda = (...items) => h('ul.mp-leyenda', items.map(([cls, t]) => h('li', h('i.' + cls), t)));
 
   // Mini test
@@ -149,10 +159,11 @@ export function vistaMapas() {
     h('span.etiqueta', 'Tema 1 · Sección 5'), h('h1', 'Mapa físico y diagrama lógico'),
     h('p.lead', 'La misma red dibujada de dos formas: las oficinas de Cerámicas Ribera del Tajo (Nave 1). Un dibujo dice dónde está cada cosa; el otro, qué está conectado con qué.'),
     info,
-    h('div.mp-rejilla',
-      h('figure.tarjeta.mp-fig', h('figcaption', h('h2', 'Mapa físico'), h('p', 'Sobre el plano: dónde está cada equipo y por dónde van los cables.')), fis,
+    h('div.fila', { style: 'margin:0 0 12px' }, bApilar),
+    rejillaMapas = h('div.mp-rejilla',
+      h('figure.tarjeta.mp-fig', h('figcaption', ampliar(), h('h2', 'Mapa físico'), h('p', 'Sobre el plano: dónde está cada equipo y por dónde van los cables.')), fis,
         leyenda(['l-pc', 'Ordenador'], ['l-toma', 'Toma de red'], ['l-ap', 'Punto de acceso'], ['l-cable', 'Cable de red'], ['l-canaleta', 'Canaleta'], ['l-wifi', 'Wi‑Fi'], ['l-fibra', 'Fibra entre naves'])),
-      h('figure.tarjeta.mp-fig', h('figcaption', h('h2', 'Diagrama lógico'), h('p', 'Sin plano: qué cuelga de qué, de arriba abajo.')), log,
+      h('figure.tarjeta.mp-fig', h('figcaption', ampliar(), h('h2', 'Diagrama lógico'), h('p', 'Sin plano: qué cuelga de qué, de arriba abajo.')), log,
         leyenda(['l-pc', 'Ordenador'], ['l-sw', 'Switch'], ['l-rt', 'Router'], ['l-ap', 'Punto de acceso'], ['l-union', 'Cable'], ['l-wifi', 'Wi‑Fi'], ['l-fibra', 'Fibra']))),
     h('div.mp-rejilla',
       h('div.tarjeta.mp-lista', h('h3', 'Un mapa físico lleva…'), h('ul',
@@ -180,5 +191,6 @@ export function vistaMapas() {
       h('li', 'Las formas de red están en «Más formas»: busca las de redes. Escribe el nombre de cada equipo con doble clic.'),
       h('li', 'El tipo de línea (continua o discontinua) se cambia en el panel de la derecha, en «Estilo».'),
       h('li', 'Guarda a menudo. Al terminar: Archivo → Guardar como (.drawio) y Archivo → Exportar como → PDF.'))));
+  pintarApilado();
   return { el: elV };
 }
