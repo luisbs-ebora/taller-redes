@@ -9,9 +9,12 @@ export function vistaInicio() {
       h('span.etiqueta', 'Redes locales · 1.º SMR'),
       h('h1', 'Taller de Redes'),
       h('p.lead', 'Diseña la red de una empresa: qué se compra, dónde va cada cosa y por qué. Empieza viendo cómo se monta una red completa paso a paso.')),
-    h('div.rejilla', { style: 'margin-top:28px' },
+    h('h2.tema-tit', h('span.etiqueta', 'Tema 1'), ' Introducción a las redes locales'),
+    h('div.rejilla',
       tarjeta('#/animado', '1', 'Red animada', 'La red de Cerámicas Ribera del Tajo montada paso a paso, con el presupuesto y los errores típicos.', 'Disponible'),
-      tarjeta('#/mapas', '2', 'Mapa físico y diagrama lógico', 'Las oficinas de Cerámicas dibujadas de las dos formas: toca un equipo y mira cómo sale en cada una. Tema 1.', 'Disponible'),
-      tarjeta('#/rack', '3', 'Armario rack', 'Monta el armario de un aula de 20 puestos: panel de parcheo, pasahilos, switch, SAI y regleta, en su U. Tema 2.', 'Disponible'),
-      tarjeta('#/practica', '4', 'Práctica', 'Te toca una empresa distinta cada vez, de tres sedes o pequeña: clasifica sus redes, diséñala sobre el plano y haz la compra. La web te corrige.', 'Sin nota'))) };
+      tarjeta('#/mapas', '2', 'Mapa físico y diagrama lógico', 'Las oficinas de Cerámicas dibujadas de las dos formas: toca un equipo y mira cómo sale en cada una.', 'Disponible'),
+      tarjeta('#/practica', '3', 'Práctica: diseña una red', 'Te toca una empresa distinta cada vez, de tres sedes o pequeña: clasifica sus redes, diséñala sobre el plano y haz la compra. La web te corrige.', 'Sin nota')),
+    h('h2.tema-tit', h('span.etiqueta', 'Tema 2'), ' Medios de transmisión y espacios físicos'),
+    h('div.rejilla',
+      tarjeta('#/rack', '1', 'Armario rack', 'Monta el armario de un aula de 20 puestos: panel de parcheo, pasahilos, switch, SAI y regleta, cada cosa en su U.', 'Disponible'))) };
 }

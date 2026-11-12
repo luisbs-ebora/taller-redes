@@ -186,7 +186,7 @@ export function construirRed() {
       texto: 'Un armario rack en cada nave. Dentro irán el switch y, en las oficinas, también el servidor y el SAI. Así nadie los golpea, derrama algo encima o los desenchufa sin querer (requisito R3).',
       tituloMal: 'Switch y servidor encima de una mesa',
       textoMal: 'Sin armario, cualquiera puede tirarlos, mojarlos o desenchufarlos. El requisito R3 pide guardar los datos en un lugar protegido.',
-      foco: () => NAVES.O.c.clone(), dist: 70,
+      foco: () => NAVES.O.c.clone(), dist: 94,
     });
     cajaPedido(p, 0, ['AR-01', '× 3']);
     const k = p.k;
@@ -218,7 +218,7 @@ export function construirRed() {
       const sw = poner(g, k2.caja(2.2, 0.35, 1.0, C.sw, 0.05), -0.4, 1.8, 0);
       const nas = poner(g, k2.caja(1.0, 1.2, 1.3, C.nas, 0.05), 0.9, 2.2, 0);
       const taza = poner(g, k2.cil(0.32, 0.6, C.blanco, 0.05, 14), -0.4, 7, 0);
-      ctx.enfocar(g.position.clone(), 800, V(0.3, 0.8, 1), 34);
+      ctx.enfocar(g.position.clone(), 800, V(0.3, 0.8, 1), 46);
       await aparecer([sw, nas], 400);
       await esperar(300);
       await animar(520, t => { taza.position.y = 7 - 5 * t; taza.rotation.z = t * 2.4; }, ease.rebote);
@@ -314,7 +314,7 @@ export function construirRed() {
       texto: '25 ordenadores de sobremesa (12 + 6 + 4 + 3) con su monitor, porque no lo traen, y 4 portátiles para los comerciales. Los terminales de los hornos y los lectores ya los tiene la empresa: solo hay que conectarlos con un latiguillo.',
       tituloMal: 'Ordenadores gaming para la oficina',
       textoMal: 'Con el OR-03 los 25 puestos cuestan 36.250 € solo en ordenadores: te pasas del presupuesto. Para trabajar en una oficina no hace falta un PC gaming.',
-      foco: () => NAVES.O.c.clone(), dist: 70,
+      foco: () => NAVES.O.c.clone(), dist: 94,
     });
     cajaPedido(p, 2, ['OR-02 · 05', '25 + 25'], C.carton);
     const k = p.k;
@@ -372,7 +372,7 @@ export function construirRed() {
       texto: 'Un switch por nave, con un puerto para cada aparato con cable. Oficinas: 20 aparatos → SW-24P, con PoE para los puntos de acceso. Taller: 6 PC + 4 hornos + la fibra = 11 → SW-16. Almacén: 4 PC + 2 lectores + la fibra = 7 → SW-16, con sitio para crecer.',
       tituloMal: 'Un switch de 8 puertos en el taller',
       textoMal: 'En el taller hay 11 aparatos con cable y el SW-08 solo tiene 8 puertos: 3 se quedan sin conectar. ¡Cuenta también los terminales de los hornos y la fibra!',
-      foco: () => rackPos(NAVES.T).add(V(0, 3, 0)), focoDir: V(0.2, 0.8, 1), dist: 40,
+      foco: () => rackPos(NAVES.T).add(V(0, 3, 0)), focoDir: V(0.2, 0.8, 1), dist: 54,
     });
     cajaPedido(p, 3, ['SW-24P · 16', '1 + 2'], C.carton);
     const k = p.k;
@@ -404,7 +404,7 @@ export function construirRed() {
     };
     p.mal = async ctx => {
       const base = rackPos(NAVES.T).add(V(0, 3.45, 0.05));
-      ctx.enfocar(base.clone(), 900, V(0.15, 0.55, 1), 22);
+      ctx.enfocar(base.clone(), 900, V(0.15, 0.55, 1), 30);
       await vaciarCaja(p);
       const g = new THREE.Group(); g.position.copy(base); p.fijo.add(g);
       poner(g, p.k.caja(1.9, 0.5, 1.0, 0x9aa3b2, 0.05), 0, 0, 0);
@@ -433,7 +433,7 @@ export function construirRed() {
       texto: 'Un NAS de 4 bahías con 4 discos de 4 TB y un SAI, todo dentro del armario de las oficinas. Los datos de la empresa quedan en un sitio central y protegido (R3). Si se va la luz, el SAI da unos minutos para apagar sin perder datos.',
       tituloMal: 'NAS sin discos',
       textoMal: 'Los discos se compran aparte. Sin ellos, el NAS no tiene dónde guardar nada.',
-      foco: () => rackPos(NAVES.O).add(V(0, 2.5, 0)), focoDir: V(0.1, 0.6, 1), dist: 24,
+      foco: () => rackPos(NAVES.O).add(V(0, 2.5, 0)), focoDir: V(0.1, 0.6, 1), dist: 32,
     });
     cajaPedido(p, 4, ['SV-02 · 03 · 05', 'NAS + discos'], C.carton);
     const k = p.k, base = rackPos(NAVES.O);
@@ -452,7 +452,7 @@ export function construirRed() {
     poner(sai, k.caja(0.5, 0.18, 0.04, C.verde, 0), 0, 0.3, 0.57);
     sai.visible = false; p.fijo.add(sai); p.sai = sai;
     p.montar = async ctx => {
-      ctx.enfocar(base.clone().add(V(0, 2.5, 0)), 900, V(0.1, 0.6, 1), 24);
+      ctx.enfocar(base.clone().add(V(0, 2.5, 0)), 900, V(0.1, 0.6, 1), 32);
       await vaciarCaja(p);
       await repartir([nas, sai], p.desde(), 1200, 12);
       p.discos.forEach(d => { d.position.z = 1.8; });
@@ -463,7 +463,7 @@ export function construirRed() {
       ctx.burbuja('SAI', sai.position.clone().add(V(0.5, 1.5, 0)));
     };
     p.mal = async ctx => {
-      ctx.enfocar(base.clone().add(V(0, 2.5, 0)), 900, V(0.1, 0.6, 1), 22);
+      ctx.enfocar(base.clone().add(V(0, 2.5, 0)), 900, V(0.1, 0.6, 1), 30);
       await vaciarCaja(p);
       await repartir([nas], p.desde(), 1000, 12);
       ctx.burbuja('Bahías vacías', nas.position.clone().add(V(0, 1.6, 0)), 'peligro');
@@ -481,7 +481,7 @@ export function construirRed() {
       texto: 'La multifunción IM-01 va conectada a su toma de red, y de ahí al switch. Así todos los puestos pueden imprimir y escanear con ella.',
       tituloMal: 'Impresora USB',
       textoMal: 'La IM-02 solo tiene USB: se conecta a un ordenador y los demás no la encuentran en la red.',
-      foco: () => L(NAVES.O, IMPRESORA[0], 1, IMPRESORA[1]), focoDir: V(-0.3, 0.8, 1), dist: 34,
+      foco: () => L(NAVES.O, IMPRESORA[0], 1, IMPRESORA[1]), focoDir: V(-0.3, 0.8, 1), dist: 46,
     });
     cajaPedido(p, 5, ['IM-01', 'multifunción'], C.carton);
     const k = p.k, n = NAVES.O;
@@ -492,13 +492,13 @@ export function construirRed() {
     poner(imp, k.caja(0.5, 0.25, 0.08, 0x4a86e8, 0), 0.6, 1.4, 0.86);
     imp.visible = false; p.fijo.add(imp); p.imp = imp;
     p.montar = async ctx => {
-      ctx.enfocar(L(n, IMPRESORA[0], 1, IMPRESORA[1]), 900, V(-0.3, 0.8, 1), 34);
+      ctx.enfocar(L(n, IMPRESORA[0], 1, IMPRESORA[1]), 900, V(-0.3, 0.8, 1), 46);
       await vaciarCaja(p);
       await repartir([imp], p.desde(), 1100, 12);
       ctx.burbuja('Todos pueden imprimir', imp.position.clone().add(V(0, 3.5, 0)));
     };
     p.mal = async ctx => {
-      ctx.enfocar(L(n, 6, 1, 0), 900, V(-0.2, 0.9, 1), 46);
+      ctx.enfocar(L(n, 6, 1, 0), 900, V(-0.2, 0.9, 1), 62);
       await vaciarCaja(p);
       const imp2 = new THREE.Group(); imp2.position.copy(L(n, 10.8, 1.55, 8.9));
       poner(imp2, k.caja(1.4, 0.9, 1.0, 0x9aa3b2, 0.05), 0, 0.45, 0);
@@ -522,7 +522,7 @@ export function construirRed() {
       texto: 'Dos puntos de acceso de techo cubren toda la nave de oficinas para los portátiles y las visitas (R2). Reciben la corriente por el propio cable de red, desde los puertos PoE del SW-24P.',
       tituloMal: 'Punto de acceso sin PoE',
       textoMal: 'Si el punto de acceso va a un puerto sin PoE (o a un switch sin PoE y sin inyector WF-02), no le llega corriente y no se enciende.',
-      foco: () => NAVES.O.c.clone(), focoDir: V(0, 1, 0.8), dist: 56,
+      foco: () => NAVES.O.c.clone(), focoDir: V(0, 1, 0.8), dist: 76,
     });
     cajaPedido(p, 6, ['WF-01', '× 2'], C.carton);
     const k = p.k, n = NAVES.O;
@@ -537,7 +537,7 @@ export function construirRed() {
       return g;
     });
     p.montar = async ctx => {
-      ctx.enfocar(NAVES.O.c.clone(), 900, V(0, 1, 0.8), 56);
+      ctx.enfocar(NAVES.O.c.clone(), 900, V(0, 1, 0.8), 76);
       await vaciarCaja(p);
       await repartir(p.aps, p.desde(), 1200, 12);
       p.aps.forEach(ap => ap.userData.luz.material.color.set(LED.ok));
@@ -545,7 +545,7 @@ export function construirRed() {
       if (!velocidad.instantaneo) { R.demoWifi = true; ctx.burbuja('PoE: corriente por el cable', p.aps[0].position.clone().add(V(0, 7.2, 0))); await esperar(900); }
     };
     p.mal = async ctx => {
-      ctx.enfocar(NAVES.O.c.clone(), 900, V(0, 1, 0.8), 50);
+      ctx.enfocar(NAVES.O.c.clone(), 900, V(0, 1, 0.8), 68);
       await vaciarCaja(p);
       await repartir(p.aps, p.desde(), 1100, 12);
       for (const ap of p.aps) { ctx.burbuja('Sin corriente', ap.position.clone().add(V(0, 7, 0)), 'peligro'); await esperar(350); }
@@ -659,7 +659,7 @@ export function construirRed() {
       ctx.burbuja('Router del operador', OPK().add(V(0, 3, 0)));
     };
     p.mal = async ctx => {
-      ctx.enfocar(NAVES.O.c.clone(), 900, V(0, 1, 0.8), 60);
+      ctx.enfocar(NAVES.O.c.clone(), 900, V(0, 1, 0.8), 81);
       await vaciarCaja(p);
       const r = router(L(NAVES.O, 2, 1.8, -4)); p.fijo.add(r);
       await repartir([r], p.desde(), 900, 12);
@@ -695,7 +695,7 @@ export function construirRed() {
     const p = nuevaPieza('topologia', {
       nombre: 'La topología', accion: 'Ver la topología', coste: 0, requiere: ['encender'],
       texto: 'Cada nave es una estrella: cada equipo tiene su propio cable hasta el switch. La red completa es un árbol (estrella extendida): del switch de las oficinas salen las fibras al taller y al almacén.',
-      foco: () => V(4, 0, -2), focoDir: V(0, 1, 0.55), dist: 150,
+      foco: () => V(4, 0, -2), focoDir: V(0, 1, 0.55), dist: 165,
     });
     cajaPedido(p, 10, ['Topología', 'estrella · árbol'], 0x9cc3e6);
     const k = p.k;
@@ -710,14 +710,15 @@ export function construirRed() {
     }
     p.troncales = [linea(rackPos(NAVES.O).setY(7), rackPos(NAVES.T).setY(7), C.fibra, 0.45), linea(rackPos(NAVES.O).setY(7), rackPos(NAVES.A).setY(7), C.fibra, 0.45)];
     p.montar = async ctx => {
-      ctx.enfocar(V(4, 0, -2), 900, V(0, 1, 0.55), 150);
+      ctx.enfocar(V(4, 0, -2), 900, V(0, 1, 0.55), 165);
+      p.lineas.forEach(l => { l.visible = true; });
       await vaciarCaja(p);
       await animar(1500, t => p.lineas.forEach((l, i) => {
         const u = tramoA(t, i, p.lineas.length, 0.9);
         l.geometry.setDrawRange(0, Math.floor((u * l.geometry.index.count) / 6) * 6);
       }), ease.lineal);
       ['O', 'T', 'A'].forEach(id => ctx.rotulo('Estrella', rackPos(NAVES[id]).add(V(2, 9, 0)), p.id, 'estrella'));
-      ctx.rotulo('Árbol (estrella extendida)', V(4, 15, -22), p.id, 'grande');
+      ctx.rotulo('Árbol (estrella extendida)', V(6, 12, 2), p.id, 'grande');
     };
   }
 
@@ -728,7 +729,7 @@ export function construirRed() {
       texto: 'Los puestos con cable de cada nave forman una LAN; el Wi‑Fi, una WLAN; las tres naves unidas, una LAN de campus; la tienda llega por Internet: una WAN. Y los auriculares Bluetooth del comercial con su móvil, una PAN.',
       tituloMal: 'Llamar MAN a la unión de las naves',
       textoMal: 'Las naves están en el mismo polígono, a menos de 200 m, y la red es de la empresa: es una LAN que cubre varios edificios (de campus), no una MAN.',
-      foco: () => V(-8, 0, -14), focoDir: V(0, 1, 0.7), dist: 150,
+      foco: () => V(-8, 0, -14), focoDir: V(0, 1, 0.7), dist: 165,
     });
     cajaPedido(p, 11, ['LAN · WAN', 'tipos de red'], 0x9cc3e6);
     const k = p.k;
@@ -740,8 +741,10 @@ export function construirRed() {
     poner(persona, k.caja(0.3, 0.55, 0.1, 0x1d1b24, 0.03), 0.65, 1.7, 0.3);
     persona.visible = false; p.fijo.add(persona); p.persona = persona;
     p.montar = async ctx => {
-      ctx.enfocar(V(-8, 0, -14), 900, V(0, 1, 0.7), 150);
+      ctx.enfocar(V(-8, 0, -14), 900, V(0, 1, 0.7), 165);
       await vaciarCaja(p);
+      // se quita lo de la topología para que no se amontone con los tipos de red
+      ctx.quitarRotulos('topologia'); if (P.topologia) P.topologia.lineas.forEach(l => { l.visible = false; });
       await aparecer(persona, 500);
       const r = (t, pos, c) => { ctx.rotulo(t, pos, p.id, c); return esperar(380); };
       await r('LAN', NAVES.O.c.clone().add(V(-3, 6, 9)));
@@ -777,6 +780,7 @@ export function construirRed() {
     const k = p.k;
     p.montar = async ctx => {
       ctx.enfocar(V(14, 0, -10), 900, V(0, 1, 0.7), 130);
+      ctx.quitarRotulos('topologia'); ctx.quitarRotulos('tipos'); if (P.topologia) P.topologia.lineas.forEach(l => { l.visible = false; });
       await vaciarCaja(p);
       if (!velocidad.instantaneo) ctx.chispas(rackPos(NAVES.T).add(V(0, 3.6, 0.6)), false);
       caer(R, 'T');

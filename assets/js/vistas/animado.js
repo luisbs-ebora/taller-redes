@@ -91,7 +91,8 @@ export async function vistaAnimado(E) {
     chispas: (p, fuerte) => { if (!velocidad.instantaneo) chispas(p, fuerte); },
     confeti: () => { if (!velocidad.instantaneo) confeti(); },
     presupuesto: d => { extra += d; pintarPresupuesto(true); },
-    rotulo: (t, p, dueno, clase) => rotulo(t, p, clase),
+    rotulo: (t, p, dueno, clase) => rotulo(t, p, clase, dueno),
+    quitarRotulos: dueno => { for (let i = rotulos.length - 1; i >= 0; i--) if (rotulos[i].dueno === dueno) { rotulos[i].el.remove(); rotulos.splice(i, 1); } },
   };
 
   /* ---------- Escena ---------- */
@@ -161,11 +162,30 @@ export async function vistaAnimado(E) {
       controles.update();
       renderer.render(escena, camara);
       const w = lienzo.clientWidth, hh = lienzo.clientHeight;
-      for (const b of burbujas.concat(rotulos)) {
+      for (const b of burbujas) {
+        proy.copy(b.pos).project(camara);
+        b.el.style.transform = `translate(${((proy.x + 1) / 2) * w}px, ${((1 - proy.y) / 2) * hh}px)`;
+        b.el.style.visibility = proy.z > 1 ? 'hidden' : '';
+      }
+      // Rótulos: si dos se pisan en pantalla, el segundo sube hasta quedar libre (primero se colocan los del paso; después, los nombres fijos)
+      const puestos = [];
+      const orden = rotulos.length > 1 ? rotulos.slice().sort((a, b) => (b.fijo ? 1 : 0) - (a.fijo ? 1 : 0)) : rotulos;
+      for (const b of orden) {
         proy.copy(b.pos).project(camara);
         const fuera = proy.z > 1;
-        b.el.style.transform = `translate(${((proy.x + 1) / 2) * w}px, ${((1 - proy.y) / 2) * hh}px)`;
         b.el.style.visibility = fuera ? 'hidden' : '';
+        let x = ((proy.x + 1) / 2) * w, y = ((1 - proy.y) / 2) * hh;
+        if (!fuera && !b.exacto) {   // los números de U y de puerto no se mueven: marcan un sitio exacto
+          if (!b.tam) { const s = b.el.firstChild; b.tam = [s.offsetWidth, s.offsetHeight]; }
+          const [bw, bh] = b.tam;
+          for (let n = 0; n < 6; n++) {
+            const choca = puestos.find(q => Math.abs(q[0] - x) < (q[2] + bw) / 2 + 4 && y > q[1] - q[3] - 3 && y - bh < q[1] + 3);
+            if (!choca) break;
+            y = choca[1] - choca[3] - 4;
+          }
+          puestos.push([x, y, bw, bh]);
+        }
+        b.el.style.transform = `translate(${x}px, ${y}px)`;
       }
     });
 
@@ -265,10 +285,10 @@ export async function vistaAnimado(E) {
     burbujas.push(reg);
     despues(2300 * velocidad.factor, () => { b.remove(); burbujas.splice(burbujas.indexOf(reg), 1); });
   }
-  function rotulo(texto, pos, tipo = '') {
+  function rotulo(texto, pos, tipo = '', dueno = null) {
     const r = h('div.rd-rotulo' + (tipo ? '.' + tipo : ''), h('span', texto));
     capaRotulos.append(r);
-    rotulos.push({ el: r, pos: pos.clone() });
+    rotulos.push({ el: r, pos: pos.clone(), dueno, fijo: tipo !== 'nave', exacto: tipo === 'u' || tipo === 'puerto' });
     return r;
   }
   const geoChispa = new THREE.OctahedronGeometry(0.45);
