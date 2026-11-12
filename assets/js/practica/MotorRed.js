@@ -45,7 +45,8 @@ var MotorRed = (function () {
 
   // ---------- Opciones para clasificar redes ----------
   var ALCANCES = ['PAN', 'LAN', 'WLAN', 'MAN', 'WAN'];
-  var MEDIOS = ['Cableada', 'Inalámbrica'];
+  // Mismas palabras que los apuntes: medio guiado (la señal va por un cable) o no guiado (va por el aire)
+  var MEDIOS = ['Guiado (cable)', 'No guiado (aire)'];
   var PROPIEDAD = ['Privada', 'Pública o de operador'];
 
   // ---------- Azar con semilla (mismo caso para la misma semilla) ----------
@@ -73,38 +74,39 @@ var MotorRed = (function () {
     var r = azar(seed);
     var pl = elegir(r, def.plantillas);
     var ids = ['A', 'B', 'C'];
-    var sedes = pl.sedes.map(function (s, i) {
+    var corto = !!def.corto;   // empresa pequeña: una sola sede, sin enlaces ni averías entre sedes
+    var sedes = (corto ? pl.sedes.slice(0, 1) : pl.sedes).map(function (s, i) {
       var principal = i === 0;
       return {
         id: ids[i], nombre: s.nombre, principal: principal,
-        puestos: principal ? entre(r, 6, 14) : entre(r, 2, 7),
+        puestos: corto ? entre(r, 4, 9) : principal ? entre(r, 6, 14) : entre(r, 2, 7),
         existentes: s.existentes ? { texto: s.existentes, n: entre(r, 2, 5) } : null
       };
     });
     var A = sedes[0];
-    A.m2 = entre(r, 5, 14) * 50;                       // 250–700 m²
+    A.m2 = corto ? entre(r, 3, 9) * 50 : entre(r, 5, 14) * 50;   // 250–700 m² (150–450 m² en el caso corto)
     A.aps = Math.ceil(A.m2 / M2_POR_AP);
-    A.portatiles = entre(r, 2, 5);
+    A.portatiles = corto ? entre(r, 1, 3) : entre(r, 2, 5);
     A.impresora = true; A.servidor = true; A.router = true;
 
     // Distancias (m). Al menos un tramo desde la principal supera 100 m.
     var dAB = entre(r, 7, 20) * 10, dAC = entre(r, 7, 20) * 10, dBC = entre(r, 4, 16) * 10;
     if (dAB <= LIMITE_COBRE && dAC <= LIMITE_COBRE) dAB = entre(r, 12, 20) * 10;
-    var tramos = [{ id: 'A-B', a: 'A', b: 'B', m: dAB }, { id: 'A-C', a: 'A', b: 'C', m: dAC }, { id: 'B-C', a: 'B', b: 'C', m: dBC }];
+    var tramos = corto ? [] : [{ id: 'A-B', a: 'A', b: 'B', m: dAB }, { id: 'A-C', a: 'A', b: 'C', m: dAC }, { id: 'B-C', a: 'B', b: 'C', m: dBC }];
 
     var remota = null;
-    if (pl.remota && r() < (def.probRemota == null ? 0.7 : def.probRemota)) {
+    if (!corto && pl.remota && r() < (def.probRemota == null ? 0.7 : def.probRemota)) {
       remota = { id: 'R', nombre: pl.remota, puestos: entre(r, 2, 6) };
     }
     // R1: una avería en una sede secundaria no puede dejar sin red a la otra
     var orden = r() < 0.5 ? ['B', 'C'] : ['C', 'B'];
-    var r1 = { averia: orden[0], protegida: orden[1] };
+    var r1 = corto ? null : { averia: orden[0], protegida: orden[1] };
 
     var caso = {
       ejercicio: def.id, seed: seed, version: 1,
       titulo: def.titulo || 'Diseña la red',
       empresa: pl.empresa, actividad: pl.actividad, recinto: pl.recinto || 'el mismo polígono',
-      sedes: sedes, tramos: tramos, remota: remota, r1: r1,
+      sedes: sedes, tramos: tramos, remota: remota, r1: r1, corto: corto,
       m2PorAp: M2_POR_AP, mPorToma: M_POR_TOMA, limiteCobre: LIMITE_COBRE
     };
     caso.tipos = crearTipos(r, caso, pl);
@@ -117,15 +119,16 @@ var MotorRed = (function () {
   function crearTipos(r, caso, pl) {
     var A = caso.sedes[0];
     var lista = [
-      { texto: 'Los ' + A.puestos + ' puestos de «' + A.nombre + '» conectados por cable', sol: ['LAN', 'Cableada', 'Privada'] },
-      { texto: 'La Wi-Fi de «' + A.nombre + '» para los portátiles y las visitas', sol: ['WLAN', 'Inalámbrica', 'Privada'] },
-      { texto: 'La unión entre las tres sedes ' + (/^el /.test(caso.recinto) ? 'del ' + caso.recinto.slice(3) : 'de ' + caso.recinto), sol: ['LAN', 'Cableada', 'Privada'], nota: 'Están en el mismo recinto y la red es de la empresa: es una LAN que cubre varios edificios (de campus), no una MAN.' },
+      { texto: 'Los ' + A.puestos + ' puestos de «' + A.nombre + '» conectados por cable', sol: ['LAN', 'Guiado (cable)', 'Privada'] },
+      { texto: 'La Wi-Fi de «' + A.nombre + '» para los portátiles y las visitas', sol: ['WLAN', 'No guiado (aire)', 'Privada'] },
+      caso.corto ? { texto: 'El servidor y la impresora conectados al switch con cable de par trenzado', sol: ['LAN', 'Guiado (cable)', 'Privada'] } :
+      { texto: 'La unión entre las tres sedes ' + (/^el /.test(caso.recinto) ? 'del ' + caso.recinto.slice(3) : 'de ' + caso.recinto), sol: ['LAN', 'Guiado (cable)', 'Privada'], nota: 'Están en el mismo recinto y la red es de la empresa: es una LAN que cubre varios edificios (de campus), no una MAN.' },
       caso.remota
-        ? { texto: 'La conexión entre «' + A.nombre + '» y «' + caso.remota.nombre + '» a través de Internet', sol: ['WAN', 'Cableada', 'Pública o de operador'] }
-        : { texto: 'La conexión de la empresa a Internet con la fibra del operador', sol: ['WAN', 'Cableada', 'Pública o de operador'] },
-      { texto: pl.pan || 'Los auriculares Bluetooth que un comercial usa con su móvil', sol: ['PAN', 'Inalámbrica', 'Privada'] }
+        ? { texto: 'La conexión entre «' + A.nombre + '» y «' + caso.remota.nombre + '» a través de Internet', sol: ['WAN', 'Guiado (cable)', 'Pública o de operador'] }
+        : { texto: 'La conexión de la empresa a Internet con la fibra del operador', sol: ['WAN', 'Guiado (cable)', 'Pública o de operador'] },
+      { texto: pl.pan || 'Los auriculares Bluetooth que un comercial usa con su móvil', sol: ['PAN', 'No guiado (aire)', 'Privada'] }
     ];
-    if (r() < 0.5) lista[1] = { texto: 'La red de fibra del ayuntamiento que une los edificios municipales de la ciudad', sol: ['MAN', 'Cableada', 'Pública o de operador'] };
+    if (r() < 0.5) lista[1] = { texto: 'La red de fibra del ayuntamiento que une los edificios municipales de la ciudad', sol: ['MAN', 'Guiado (cable)', 'Pública o de operador'] };
     return barajar(r, lista);
   }
 
@@ -226,8 +229,9 @@ var MotorRed = (function () {
       resp.sedes[s.id] = d;
       var n = aparatos(caso, resp, s.id).max;
       d.cuenta = n;
-      d.switch = s.principal ? 'SW-24P' : n <= 8 ? 'SW-08' : n <= 16 ? 'SW-16' : 'SW-24';
-      if (!s.principal && n >= 8) d.switch = n < 16 ? 'SW-16' : 'SW-24';   // algo de margen para crecer
+      d.switch = s.principal && !caso.corto ? 'SW-24P' : n <= 8 ? 'SW-08' : n <= 16 ? 'SW-16' : 'SW-24';
+      if (caso.corto) resp.compra['WF-02'] = A.aps;   // sin switch PoE: un inyector por punto de acceso
+      if ((!s.principal || caso.corto) && n >= 8) d.switch = n < 16 ? 'SW-16' : 'SW-24';   // algo de margen para crecer
     });
     if (caso.remota) resp.sedes.R = { switch: caso.remota.puestos > PUERTOS_ROUTER ? 'SW-08' : '', armario: '', cuenta: caso.remota.puestos };
     var puestosCampo = caso.sedes.reduce(function (n, s) { return n + s.puestos; }, 0);
@@ -312,15 +316,15 @@ var MotorRed = (function () {
     // 3. Enlaces entre sedes
     var llega = alcanzables(caso, resp);
     var todas = caso.sedes.every(function (s) { return llega[s.id]; });
-    anota('enlaces', todas, 0.5, 'Todas las sedes conectadas con la principal (R4)',
+    if (!caso.corto) anota('enlaces', todas, 0.5, 'Todas las sedes conectadas con la principal (R4)',
       'Hay sedes sin conexión: ' + caso.sedes.filter(function (s) { return !llega[s.id]; }).map(function (s) { return s.nombre; }).join(', ') + '. Revisa los enlaces y el límite de 100 m del par trenzado.');
     var largos = caso.tramos.filter(function (t) { return resp.enlaces[t.id] === 'cobre' && t.m > LIMITE_COBRE; });
-    anota('enlaces', largos.length === 0 && todas, 0.5, 'Ningún tramo de par trenzado pasa de 100 m',
+    if (!caso.corto) anota('enlaces', largos.length === 0 && todas, 0.5, 'Ningún tramo de par trenzado pasa de 100 m',
       largos.length ? largos.map(function (t) { return nombreTramo(caso, t) + ' (' + t.m + ' m)'; }).join(', ') + ': ahí hace falta fibra.' : 'Primero tienen que estar todas las sedes conectadas.');
     var fibras = caso.tramos.filter(function (t) { return resp.enlaces[t.id] === 'fibra'; });
     var mFibra = fibras.reduce(function (s, t) { return s + t.m; }, 0);
     var okConv = n('FO-01') >= fibras.length, okMetros = n('FO-02') >= mFibra && n('FO-02') <= mFibra * 1.5 + 20;
-    anota('enlaces', fibras.length === 0 ? todas : (okConv ? 0.5 : 0) + (okMetros ? 0.5 : 0), 0.5,
+    if (!caso.corto) anota('enlaces', fibras.length === 0 ? todas : (okConv ? 0.5 : 0) + (okMetros ? 0.5 : 0), 0.5,
       fibras.length ? 'Material de la fibra: ' + fibras.length + ' pareja(s) de conversores y ' + mFibra + ' m de fibra con algo de margen' : 'Sin enlaces de fibra',
       (!okConv ? 'Cada enlace de fibra necesita una pareja de conversores FO-01 (tienes ' + n('FO-01') + ', hacen falta ' + fibras.length + '). ' : '') +
       (!okMetros ? 'Metros de fibra: tus tramos suman ' + mFibra + ' m; compra esa cantidad y un poco de margen (tienes ' + n('FO-02') + ' m).' : ''));
@@ -347,7 +351,7 @@ var MotorRed = (function () {
     anota('compra', n('CU-03') >= minRosetas, 0.2, 'Tomas de pared: al menos ' + minRosetas + ' dobles para ' + nTomas + ' conectores', 'Tienes ' + n('CU-03') + '. Cada toma doble da 2 conectores.');
     anota('compra', n('CU-02') >= nTomas, 0.2, 'Latiguillos: al menos uno por toma (' + nTomas + ')', 'Tienes ' + n('CU-02') + '.');
     var sinArmario = caso.sedes.filter(function (s) { var d = resp.sedes[s.id] || {}; return !d.armario; });
-    anota('compra', sinArmario.length === 0, 0.25, 'Un armario en cada sede del recinto (R3)', 'Sin armario: ' + sinArmario.map(function (s) { return s.nombre; }).join(', ') + '.');
+    anota('compra', sinArmario.length === 0, 0.25, caso.corto ? 'Un armario para el switch y el servidor (R3)' : 'Un armario en cada sede del recinto (R3)', 'Sin armario: ' + sinArmario.map(function (s) { return s.nombre; }).join(', ') + '.');
     anota('compra', n('WF-03') === 0 && sobremesa > 0, 0.25, 'Sin router doméstico', 'El router lo pone el operador y el Wi-Fi lo dan los puntos de acceso: el WF-03 sobra.');
 
     // 5. Wi-Fi (R2): puntos de acceso suficientes y con corriente
@@ -358,12 +362,12 @@ var MotorRed = (function () {
     anota('wifi', apsA > 0 && alimentados >= apsA, 0.25, 'Los puntos de acceso tienen corriente (PoE o inyector)', apsA ? 'Hay ' + apsA + ' punto(s) de acceso y solo ' + alimentados + ' con corriente. Usa un switch con PoE (SW-24P) o un inyector WF-02 para cada uno.' : '');
 
     // 6. Averías: R1 y punto débil
-    var caidas = {}; caidas[caso.r1.averia] = true;
+    var caidas = {}; if (caso.r1) caidas[caso.r1.averia] = true;
     var llegaR1 = alcanzables(caso, resp, caidas);
-    anota('averias', !!llegaR1[caso.r1.protegida] && todas, 0.5,
+    if (caso.r1) anota('averias', !!llegaR1[caso.r1.protegida] && todas, 0.5,
       'R1: si se avería el switch de «' + sede(caso, caso.r1.averia).nombre + '», «' + sede(caso, caso.r1.protegida).nombre + '» sigue con red',
       !todas ? 'Primero todas las sedes tienen que llegar a la principal.' : 'En tu diseño «' + sede(caso, caso.r1.protegida).nombre + '» llega a la principal pasando por «' + sede(caso, caso.r1.averia).nombre + '». Únela directamente con la principal.');
-    anota('averias', resp.puntoDebil === 'A', 0.5, 'Punto débil: el switch de «' + A.nombre + '»',
+    if (caso.r1) anota('averias', resp.puntoDebil === 'A', 0.5, 'Punto débil: el switch de «' + A.nombre + '»',
       'De él dependen todas las sedes y el servidor. Protección: un switch de repuesto, un SAI o un enlace de reserva.');
 
     // 7. Presupuesto (R5)
@@ -373,7 +377,13 @@ var MotorRed = (function () {
 
     var nota = 0;
     Object.keys(bloques).forEach(function (k) { bloques[k] = Math.round(bloques[k] * 100) / 100; nota += bloques[k]; });
-    return { nota: Math.round(nota * 100) / 100, bloques: bloques, maximos: MAXIMOS, nombres: NOMBRES, detalle: detalle, total: tot.total, faltaGrave: false };
+    // Máximo de cada bloque según lo que se ha pedido en este caso; la nota se pasa siempre a 10
+    var maximos = {}, maxTotal = 0;
+    detalle.forEach(function (d) { maximos[d.bloque] = (maximos[d.bloque] || 0) + d.max; maxTotal += d.max; });
+    Object.keys(maximos).forEach(function (k) { maximos[k] = Math.round(maximos[k] * 100) / 100; });
+    Object.keys(bloques).forEach(function (k) { if (!maximos[k]) delete bloques[k]; });
+    nota = maxTotal ? nota / maxTotal * 10 : 0;
+    return { nota: Math.round(nota * 100) / 100, bloques: bloques, maximos: maximos, nombres: NOMBRES, detalle: detalle, total: tot.total, faltaGrave: false };
   }
 
   function nombreTramo(caso, t) { return sede(caso, t.a).nombre + ' – ' + sede(caso, t.b).nombre; }

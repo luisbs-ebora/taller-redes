@@ -25,6 +25,19 @@ var EJERCICIOS_RED = {
         sedes: [{ nombre: 'Recepción' }, { nombre: 'Restaurante', existentes: 'terminales de cobro (TPV) con cable de red' }, { nombre: 'Supermercado', existentes: 'cajas registradoras con cable de red' }],
         remota: 'Oficina de reservas de Talavera', pan: 'El altavoz Bluetooth de la animadora conectado a su móvil' }
     ]
+  },
+  // Empresa pequeña: una sola sede. Mismo trabajo (tipos de red, puertos, compra), pero se hace en un cuarto de hora.
+  'red-corta': {
+    id: 'red-corta',
+    titulo: 'Diseña la red de una empresa pequeña',
+    corto: true,
+    plantillas: [
+      { empresa: 'Academia Puente Romano', actividad: 'da clases de idiomas', recinto: 'el local de la academia', sedes: [{ nombre: 'Academia' }], pan: 'Los auriculares Bluetooth de la profesora conectados a su portátil' },
+      { empresa: 'Librería El Prado', actividad: 'vende libros y material escolar', recinto: 'el local de la librería', sedes: [{ nombre: 'Librería' }], pan: 'El lector de códigos Bluetooth conectado a la tableta del almacén' },
+      { empresa: 'Estudio de arquitectura Jara', actividad: 'hace proyectos de viviendas', recinto: 'el estudio', sedes: [{ nombre: 'Estudio' }], pan: 'El ratón y el teclado Bluetooth del portátil de la arquitecta' },
+      { empresa: 'Agencia de viajes Tajo Tours', actividad: 'organiza viajes y excursiones', recinto: 'el local de la agencia', sedes: [{ nombre: 'Agencia' }], pan: 'El reloj inteligente del director conectado a su móvil' },
+      { empresa: 'Inmobiliaria Los Olivos', actividad: 'alquila y vende pisos', recinto: 'la oficina de la inmobiliaria', sedes: [{ nombre: 'Oficina' }], pan: 'El altavoz Bluetooth de la sala de reuniones conectado a un móvil' }
+    ]
   }
 };
 

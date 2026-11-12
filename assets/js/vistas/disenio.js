@@ -6,10 +6,11 @@ import { EXAMEN_ACTIVO } from '../config.js';
 
 const miles = n => { const r = Math.round(n * 100) / 100; return (r % 1 ? r.toFixed(2).replace('.', ',') : String(r)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); };
 const euros = n => miles(n) + ' €';
-const PESTANAS = [['encargo', '1 · Encargo'], ['tipos', '2 · Tipos de red'], ['plano', '3 · Plano'], ['compra', '4 · Compra'], ['averias', '5 · Averías']];
+const TODAS_PESTANAS = [['encargo', '1 · Encargo'], ['tipos', '2 · Tipos de red'], ['plano', '3 · Plano'], ['compra', '4 · Compra'], ['averias', '5 · Averías']];
 const SWITCHES = ['SW-08', 'SW-16', 'SW-24', 'SW-24P'];
 const MEDIOS = [['', 'Sin enlace'], ['cobre', 'Par trenzado'], ['fibra', 'Fibra óptica']];
 const POS = { A: [170, 262], B: [505, 165], C: [505, 352], R: [125, 50] };
+const POS_CORTO = { A: [340, 256] };
 
 export async function vistaDisenio(modo) {
   const examen = modo === 'examen';
@@ -70,19 +71,23 @@ export async function vistaDisenio(modo) {
       if (!scriptConfigurado()) fallo(new Error('La web aún no está conectada con la hoja de notas. Avisa al profesor.'));
       return;
     }
-    boton = h('button.btn.azul', { type: 'button' }, 'Empezar con una empresa');
-    boton.addEventListener('click', async () => {
-      boton.disabled = true;
+    boton = h('button.btn.azul', { type: 'button' }, 'Empresa con tres sedes');
+    const botonCorto = h('button.btn.sec', { type: 'button' }, 'Empresa pequeña (una sede)');
+    const empezar = ejercicio => async () => {
+      boton.disabled = botonCorto.disabled = true;
       try {
-        const r = await llamar('practica-empezar', { ejercicio: 'red-practica' });
+        const r = await llamar('practica-empezar', { ejercicio });
         s = { casoId: r.casoId, caso: r.caso, resp: respVacia(r.caso), pestana: 'encargo', fase: 'trabajo' };
         guardar(); pintar();
-      } catch (e) { fallo(e); }
-    });
-    raiz.replaceChildren(cabecera('Te toca una empresa con tres sedes. Clasificas sus redes, diseñas la red sobre el plano, haces la compra con el catálogo de InfoTajo y pruebas qué pasa si algo se avería. Al final, la web te corrige y te dice qué mejorar.'),
+      } catch (e) { botonCorto.disabled = false; fallo(e); }
+    };
+    boton.addEventListener('click', empezar('red-practica'));
+    botonCorto.addEventListener('click', empezar('red-corta'));
+    raiz.replaceChildren(cabecera('Te toca una empresa distinta cada vez. Clasificas sus redes, diseñas la red sobre el plano, haces la compra con el catálogo de InfoTajo y pruebas qué pasa si algo se avería. Al final, la web te corrige y te dice qué mejorar.'),
       h('div.tarjeta', { style: 'padding:20px;max-width:640px' },
         h('p', 'Es como el proyecto de Cerámicas Ribera del Tajo, pero con otras empresas. No cuenta para nota: puedes repetir todas las veces que quieras.'),
-        h('div.fila', boton, h('a.btn.sec', { href: '#/animado' }, 'Ver la red de Cerámicas paso a paso')), aviso));
+        h('p', h('b', 'Tres sedes: '), 'como el proyecto, con enlaces entre naves, fibra y averías. ', h('b', 'Empresa pequeña: '), 'un solo local, sin enlaces; se hace en un cuarto de hora.'),
+        h('div.fila', boton, botonCorto, h('a.btn.sec', { href: '#/animado' }, 'Ver la red de Cerámicas paso a paso')), aviso));
   }
 
   function respVacia(caso) {
@@ -99,6 +104,8 @@ export async function vistaDisenio(modo) {
     if (s.fase === 'resultado') return pintarResultado();
     if (!M) M = (await motor()).M;
     const pest = s.pestana || 'encargo';
+    const PESTANAS = TODAS_PESTANAS.filter(p => !(s.caso.corto && p[0] === 'averias'));
+    if (!PESTANAS.some(p => p[0] === pest)) { s.pestana = 'encargo'; return pintar(); }
     const tabs = h('nav.dz-tabs', { role: 'tablist' }, PESTANAS.map(([id, txt]) =>
       h('button', { type: 'button', role: 'tab', 'aria-selected': String(id === pest), onclick: () => { s.pestana = id; guardar(); pintar(); } }, txt)));
     const cuerpo = { encargo: pEncargo, tipos: pTipos, plano: pPlano, compra: pCompra, averias: pAverias }[pest]();
@@ -139,17 +146,17 @@ export async function vistaDisenio(modo) {
     return h('div.dz-encargo',
       h('div.tarjeta.encargo',
         h('span.etiqueta', 'El cliente'), h('h2', { style: 'font-size:26px;margin:4px 0 6px' }, c.empresa),
-        h('p', `${c.empresa} ${c.actividad}. Tiene tres sedes en ${c.recinto}${c.remota ? ' y otra en ' + c.remota.nombre.replace(/^\w+ de /, '') : ''}. No tiene ningún equipo informático: hay que comprarlo todo, ordenadores incluidos.`)),
+        h('p', `${c.empresa} ${c.actividad}. ${c.corto ? 'Todo está en un solo local' : `Tiene tres sedes en ${c.recinto}${c.remota ? ' y otra en ' + c.remota.nombre.replace(/^\w+ de /, '') : ''}`}. No tiene ningún equipo informático: hay que comprarlo todo, ordenadores incluidos.`)),
       h('h3', 'Qué hay que conectar'),
       h('div.tabla', h('table', h('tbody', filas))),
-      h('h3', 'Distancias entre sedes'),
-      h('div.tabla', h('table', h('thead', h('tr', h('th', 'Tramo'), h('th', 'Distancia'))), h('tbody', c.tramos.map(t => h('tr', h('td', `${nombre(t.a)} → ${nombre(t.b)}`), h('td', t.m + ' m')))))),
+      c.corto ? null : h('h3', 'Distancias entre sedes'),
+      c.corto ? null : h('div.tabla', h('table', h('thead', h('tr', h('th', 'Tramo'), h('th', 'Distancia'))), h('tbody', c.tramos.map(t => h('tr', h('td', `${nombre(t.a)} → ${nombre(t.b)}`), h('td', t.m + ' m')))))),
       h('h3', 'Lo que exige la dirección'),
       h('ol.dz-req',
-        h('li', h('b', 'R1. '), `Una avería en el switch de «${nombre(c.r1.averia)}» no puede dejar sin red a «${nombre(c.r1.protegida)}».`),
+        c.r1 ? h('li', h('b', 'R1. '), `Una avería en el switch de «${nombre(c.r1.averia)}» no puede dejar sin red a «${nombre(c.r1.protegida)}».`) : null,
         h('li', h('b', 'R2. '), `Wi‑Fi en toda la sede «${A.nombre}» para los portátiles y las visitas.`),
         h('li', h('b', 'R3. '), `Los datos se guardan en un servidor central en «${A.nombre}», en un lugar protegido.`),
-        h('li', h('b', 'R4. '), 'Todas las sedes conectadas entre sí, respetando el límite de 100 m del par trenzado.'),
+        c.corto ? null : h('li', h('b', 'R4. '), 'Todas las sedes conectadas entre sí, respetando el límite de 100 m del par trenzado.'),
         h('li', h('b', 'R5. '), `No superar los ${euros(c.presupuesto)}, IVA incluido.`)),
       h('div.nota',
         h('b', 'Datos técnicos'),
@@ -202,7 +209,7 @@ export async function vistaDisenio(modo) {
     }
     const ids = c.sedes.map(x => x.id).concat(c.remota ? ['R'] : []);
     ids.forEach(id => {
-      const [x, y] = POS[id], d = s.resp.sedes[id] || {};
+      const [x, y] = (c.corto ? POS_CORTO : POS)[id], d = s.resp.sedes[id] || {};
       let estado = '';
       if (caidas) estado = caidas[id] ? 'caida' : id === 'R' ? (llega.A ? 'ok' : 'sin') : llega[id] ? 'ok' : 'sin';
       const g = el('g', { class: 'sede ' + estado + (id === 'A' ? ' principal' : '') });
@@ -240,14 +247,14 @@ export async function vistaDisenio(modo) {
         h('input.campo', { type: 'number', min: 0, max: 6, value: d.aps || 0, oninput: cambio(v => { d.aps = Math.max(0, Number(v) || 0); }), onchange: () => pintar() })));
       return h('fieldset.dz-sede', h('legend', nombre(id)), campos);
     });
-    const enlaces = h('fieldset.dz-sede', h('legend', 'Enlaces entre sedes'),
+    const enlaces = c.corto ? null : h('fieldset.dz-sede', h('legend', 'Enlaces entre sedes'),
       c.tramos.map(t => h('label.dz-campo', h('span', `${nombre(t.a)} ↔ ${nombre(t.b)} · ${t.m} m`),
         h('select.campo', { onchange: cambio(v => { if (v) s.resp.enlaces[t.id] = v; else delete s.resp.enlaces[t.id]; }, true) },
           MEDIOS.map(([v, txt]) => h('option', { value: v, selected: (s.resp.enlaces[t.id] || '') === v }, txt))))),
       h('p.dz-ayuda', 'No hace falta unir todas con todas: basta con que cada sede llegue a la principal.'));
     return h('div.dz-plano-grid',
-      h('div', plano(), h('p.dz-leyenda', h('span.l-cobre', 'Par trenzado'), h('span.l-fibra', 'Fibra óptica'), h('span.l-nada', 'Sin enlace'))),
-      h('div.dz-formas', h('p.dz-ayuda', 'Cuenta en cada sede todo lo que va por cable a su switch (también lo que ya tiene la empresa y los enlaces con otras sedes) y elige un switch con puertos suficientes. Los switches, armarios y puntos de acceso que elijas aquí se añaden solos a la compra.'), fichas, enlaces));
+      h('div', plano(), c.corto ? null : h('p.dz-leyenda', h('span.l-cobre', 'Par trenzado'), h('span.l-fibra', 'Fibra óptica'), h('span.l-nada', 'Sin enlace'))),
+      h('div.dz-formas', h('p.dz-ayuda', 'Cuenta en cada sede todo lo que va por cable a su switch (también lo que ya tiene la empresa y, si hay varias sedes, los enlaces con las otras) y elige un switch con puertos suficientes. Los switches, armarios y puntos de acceso que elijas aquí se añaden solos a la compra.'), fichas, enlaces));
   }
 
   // 4. Compra
@@ -299,9 +306,9 @@ export async function vistaDisenio(modo) {
   function confirmar() {
     const faltan = [];
     if (s.resp.tipos.some(t => t.some(x => !x))) faltan.push('Tipos de red sin terminar');
-    if (Object.keys(s.resp.enlaces).length === 0) faltan.push('No hay enlaces entre sedes');
+    if (!s.caso.corto && Object.keys(s.resp.enlaces).length === 0) faltan.push('No hay enlaces entre sedes');
     if (!Object.keys(s.resp.compra).length) faltan.push('La compra está vacía');
-    if (!s.resp.puntoDebil) faltan.push('Falta el punto débil (Averías)');
+    if (!s.caso.corto && !s.resp.puntoDebil) faltan.push('Falta el punto débil (Averías)');
     const dlg = h('dialog.dz-dialogo',
       h('h2', examen ? '¿Entregar el examen?' : '¿Comprobar tu diseño?'),
       faltan.length ? h('div', h('p', 'Te falta:'), h('ul', faltan.map(f => h('li', f)))) : h('p', 'Has rellenado todas las partes.'),
@@ -370,7 +377,7 @@ export async function vistaDisenio(modo) {
     const caja = raiz.querySelector('#dz-ejemplo');
     caja.replaceChildren(h('section.tarjeta', { style: 'padding:18px 20px;margin-top:20px' },
       h('h2', { style: 'font-size:24px' }, 'Una solución de ejemplo'),
-      h('p', 'Hay otras igual de válidas. Esta une cada sede directamente con la principal (estrella extendida), usa fibra en los tramos de más de 100 m y pone un SW-24P en la principal para alimentar los puntos de acceso por PoE.'),
+      h('p', c.corto ? 'Hay otras igual de válidas. Esta usa el switch más pequeño que tiene puertos de sobra y un inyector PoE para cada punto de acceso.' : 'Hay otras igual de válidas. Esta une cada sede directamente con la principal (estrella extendida), usa fibra en los tramos de más de 100 m y pone un SW-24P en la principal para alimentar los puntos de acceso por PoE.'),
       h('ul', c.sedes.map(x => h('li', h('b', x.nombre + ': '), `${r.sedes[x.id].cuenta} aparatos con cable → ${r.sedes[x.id].switch}`, x.principal ? ` · ${r.sedes[x.id].aps} puntos de acceso` : '')),
         c.remota ? h('li', h('b', c.remota.nombre + ': '), r.sedes.R.switch ? `${c.remota.puestos} puestos → ${r.sedes.R.switch}` : `${c.remota.puestos} puestos → al router del operador`) : null,
         c.tramos.filter(t => r.enlaces[t.id]).map(t => h('li', h('b', `${nombre(t.a)} ↔ ${nombre(t.b)}: `), r.enlaces[t.id] === 'fibra' ? `fibra óptica (${t.m} m)` : `par trenzado (${t.m} m)`))),

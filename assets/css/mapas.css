@@ -1,0 +1,41 @@
+/* mapas.css — Página «Mapa físico y diagrama lógico» */
+.mapas .lead { color: var(--tinta-2); font-size: 19px; max-width: 70ch; margin: 6px 0 14px; }
+.mp-info { background: var(--superficie); border: 2px solid var(--linea); border-radius: 12px; padding: 10px 14px; margin: 0 0 16px; min-height: 3.2em; position: sticky; top: 70px; z-index: 3; }
+.mp-rejilla { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+@media (max-width: 1000px) { .mp-rejilla { grid-template-columns: 1fr; } }
+.mp-fig { margin: 0; padding: 14px 16px; }
+.mp-fig h2 { font-size: 24px; margin: 0; } .mp-fig figcaption p { margin: 2px 0 8px; color: var(--tinta-2); }
+.mp-svg { width: 100%; height: auto; display: block; background: #fffdf7; border: 2px solid var(--linea); border-radius: 10px; }
+.mp-svg text { font-family: var(--f-texto), sans-serif; fill: #1d1b24; }
+.mp-nom { font-size: 11px; font-weight: 700; } .mp-chico { font-size: 9.5px; font-weight: 700; } .mp-tnom { font-size: 10px; fill: #5b5566 !important; }
+.mp-dentro { font-size: 11px; font-weight: 700; } .mp-sala { font-size: 12px; font-weight: 700; fill: #b8ae9c !important; letter-spacing: .12em; }
+.mp-muro { fill: #fbf6ea; stroke: #1d1b24; stroke-width: 4; } .mp-tabique { stroke: #1d1b24; stroke-width: 3; }
+.mp-mesa { fill: #ead9bd; stroke: #b79c72; stroke-width: 1.5; }
+.mp-pc { fill: #9cc3e6; stroke: #1d1b24; stroke-width: 1.8; } .mp-port { fill: #cdb9f5; stroke: #1d1b24; stroke-width: 1.8; }
+.mp-imp { fill: #f4f1ea; stroke: #1d1b24; stroke-width: 1.8; } .mp-srv { fill: #3fbf6a; stroke: #1d1b24; stroke-width: 1.8; }
+.mp-sw { fill: #4a86e8; stroke: #1d1b24; stroke-width: 1.8; } .mp-rt { fill: #ff6a3d; stroke: #1d1b24; stroke-width: 1.8; }
+.mp-sw + text, .mp-rt + text { fill: #fff !important; }
+.mp-ap { fill: #ffd23f; stroke: #1d1b24; stroke-width: 1.8; } .mp-onda { fill: none; stroke: #1d1b24; stroke-width: 1.6; stroke-linecap: round; }
+.mp-toma { fill: #fff; stroke: #1d1b24; stroke-width: 2; } .mp-armario { fill: #e4e7ec; stroke: #1d1b24; stroke-width: 2.5; }
+.mp-nube { fill: #dfeeff; stroke: #1d1b24; stroke-width: 1.8; }
+.mp-cable { stroke: #1d1b24; stroke-width: 1.6; stroke-dasharray: 5 4; fill: none; }
+.mp-canaleta { stroke: #8f8676; stroke-width: 7; fill: none; stroke-linejoin: round; opacity: .75; }
+.mp-union { stroke: #1d1b24; stroke-width: 1.6; } .mp-wifi { stroke: #8b6fe0; stroke-width: 2; stroke-dasharray: 3 5; fill: none; }
+.mp-fibra { stroke: #ff8a1f; stroke-width: 4; fill: none; } .mp-fibra-op { stroke: #ff8a1f; stroke-width: 2.5; stroke-dasharray: 8 4; fill: none; }
+.mp-el { cursor: pointer; outline: none; }
+.mp-el:hover > rect:not(.mp-mesa), .mp-el:hover > circle, .mp-el:focus-visible > rect:not(.mp-mesa), .mp-el:focus-visible > circle { stroke-width: 3.2; }
+.mp-el.sel > rect:not(.mp-mesa), .mp-el.sel > circle, .mp-el.sel > path:not(.mp-onda) { stroke: #e5484d; stroke-width: 4.5; }
+.mp-el.sel > text { fill: #c22a30 !important; }
+.mp-leyenda { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 10px 0 0; padding: 0; font-size: 14px; }
+.mp-leyenda li { display: flex; align-items: center; gap: 6px; }
+.mp-leyenda i { width: 22px; height: 14px; display: inline-block; border: 2px solid #1d1b24; border-radius: 3px; box-sizing: border-box; }
+.mp-leyenda .l-pc { background: #9cc3e6; } .mp-leyenda .l-sw { background: #4a86e8; } .mp-leyenda .l-rt { background: #ff6a3d; }
+.mp-leyenda .l-toma { background: #fff; width: 14px; } .mp-leyenda .l-ap { background: #ffd23f; border-radius: 50%; width: 16px; height: 16px; }
+.mp-leyenda .l-cable { border: 0; border-top: 2px dashed #1d1b24; height: 0; border-radius: 0; } .mp-leyenda .l-union { border: 0; border-top: 2px solid #1d1b24; height: 0; border-radius: 0; }
+.mp-leyenda .l-wifi { border: 0; border-top: 3px dotted #8b6fe0; height: 0; border-radius: 0; } .mp-leyenda .l-fibra { border: 0; border-top: 4px solid #ff8a1f; height: 0; border-radius: 0; }
+.mp-leyenda .l-canaleta { border: 0; background: #8f8676; height: 7px; opacity: .75; }
+.mp-lista { padding: 14px 18px; } .mp-lista h3 { margin: 0 0 6px; } .mp-lista ul, .mp-lista ol { margin: 0; padding-left: 20px; } .mp-lista li { margin: 4px 0; }
+.mp-error { border-left: 8px solid var(--mal); margin-bottom: 8px; }
+.mp-quiz { padding-left: 22px; } .mp-quiz li { margin: 0 0 14px; } .mp-quiz p { margin: 0 0 6px; }
+.mp-quiz .btn.ok { background: var(--bien); color: #fff; } .mp-quiz .btn.ko { background: var(--mal); color: #fff; }
+.mp-exp { color: var(--tinta-2); margin-top: 6px !important; } .mp-marcador { font-weight: 700; min-height: 1.4em; }
