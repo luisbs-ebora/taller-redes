@@ -96,7 +96,8 @@ function parteHacer() {
     h('p.lt-nota', 'Pestaña hacia abajo y el cable hacia ti: el pin 1 es el de la izquierda. Toca un hilo suelto (en el dibujo o en la lista) para meterlo en el siguiente pin; toca un pin para sacar su hilo.'),
     sueltos,
     h('div.lt-barra', probar, cortes, quitar, h('button.btn.sec', { type: 'button', onclick: vaciar }, 'Empezar de cero'), h('button.btn.sec', { type: 'button', onclick: () => nueva() }, 'Otro cable'), h('button.btn.sec', { type: 'button', onclick: () => nueva(TAREA_CONSOLA) }, 'Cable de consola (ASIR)')),
-    resultado);
+    resultado,
+    h('p.lt-enlace', h('a', { href: 'figuras/rj45.html' }, 'Ver la figura: qué hace la crimpadora dentro del RJ45 →')));
   nueva();
   return { el, destruir: () => dibujo.destruir() };
 }
