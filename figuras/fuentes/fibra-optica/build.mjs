@@ -1,9 +1,10 @@
 // Fibra óptica en corte: banco de demostración con láser giratorio, fibra cortada por el eje y receptor.
-// node build.mjs [--light]  →  fibra-optica[-light].html
+// ANATOMY=/ruta/al/clon node build.mjs  →  ../../fibra-optica.html (con la cabecera y los colores del taller)
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import * as M from "./model.mjs";
+import { paginaTaller, mat } from "../marco.mjs";
 
 // La skill Anatomy (MIT, github.com/wheresryan22/anatomy) no va en este repo: indica dónde la tienes clonada.
 const ANATOMY = process.env.ANATOMY ?? "/home/claude/terceros/anatomy";
@@ -12,7 +13,6 @@ const G = await import(`${ANATOMY}/kit/lathe.mjs`);
 const { kitScript } = await import(`${ANATOMY}/scripts/inline-kit.mjs`);
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const theme = process.argv.includes("--dark") ? "dark" : "light";
 
 const WIDTH = 720;
 const HEIGHT = 440;
@@ -57,26 +57,26 @@ const rect = (x0, x1, y0, y1) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
 function plate() {
   const out = [`<path class="iso-halo" d="${k.haloOf(PLATE, -PLATE_H - FOOT_H, PLATE_H, P)}"/>`];
   for (const [x, y] of k.corners(PLATE, 22).sort((a, b) => depth(...a) - depth(...b))) {
-    out.push(S(k.cylinder(x, y, 7, -PLATE_H - FOOT_H, 1.6, P, 28), { tone: "lo" }));
-    out.push(S(k.cylinder(x, y, 5.4, -PLATE_H - FOOT_H + 1.6, FOOT_H - 1.6, P, 28), { tone: "mid" }));
+    out.push(mat("grafito", S(k.cylinder(x, y, 7, -PLATE_H - FOOT_H, 1.6, P, 28), { tone: "hi" }) + S(k.cylinder(x, y, 5.4, -PLATE_H - FOOT_H + 1.6, FOOT_H - 1.6, P, 28), { tone: "hi" })));
   }
-  out.push(S(k.slabOf(PLATE, -PLATE_H, PLATE_H, P, 8, 1.6), { tone: "mid" }));
+  out.push(S(k.slabOf(PLATE, -PLATE_H, PLATE_H, P, 8, 1.6), { tone: "hi" }));
   out.push(Ln(k.planOutline(k.insetPlan(PLATE, 5), 0, P), { tone: "lo" }));
   const screws = k.corners(PLATE, 11);
   out.push(Ln(screws.map(([x, y]) => k.ring(x, y, 2.2, 0, P, 16)).join(""), { tone: "lo" }));
   out.push(D(screws.map(([x, y]) => at([x, y, 0])), { size: 0.5 }));
   // Regla a lo largo de la fibra: una marca cada 5 unidades, mayor cada 25.
   const strip = { x: -LEN - 3, y: PLATE.y + PLATE.d - 14, w: LEN + 6, d: 6.5, r: 1 };
-  out.push(S(k.slabOf(strip, 0, 0.6, P, 3), { tone: "lo", crease: "none" }));
-  const ticks = k.topTicks(-LEN, 0, 5, 5, strip.y + 0.25, 0.6, [2.2, 3.9], P);
-  out.push(Ln(ticks.minor, { tone: "lo" }), Ln(ticks.major, { tone: "mid" }));
-  out.push(D([at([strip.x + 1.4, strip.y + 5, 0.6]), at([strip.x + strip.w - 1.4, strip.y + 5, 0.6])], { size: 0.4 }));
+  out.push(mat("crema",
+    S(k.slabOf(strip, 0, 0.6, P, 3), { tone: "hi", crease: "none" }) +
+    (() => { const ticks = k.topTicks(-LEN, 0, 5, 5, strip.y + 0.25, 0.6, [2.2, 3.9], P); return Ln(ticks.minor, { tone: "lo" }) + Ln(ticks.major, { tone: "mid" }); })() +
+    D([at([strip.x + 1.4, strip.y + 5, 0.6]), at([strip.x + strip.w - 1.4, strip.y + 5, 0.6])], { size: 0.4 })));
   // Placa de características: el tipo de fibra montada (texto vivo).
   const label = { x: 22, y: PLATE.y + PLATE.d - 15.5, w: 66, d: 10.5, r: 1.2 };
-  out.push(S(k.slabOf(label, 0, 0.8, P, 3), { tone: "mid", crease: "none" }));
-  out.push(Ln(k.planOutline(k.insetPlan(label, 1.4), 0.8, P, 3), { tone: "faint" }));
-  out.push(`<g id="fo-label">${k.faceTextSvg(k.topMatrix([label.x + 7, label.y + 6.6], 0.8, P, "x"), "50/125 µm · multimodo", { size: 3.6, tone: "mid" })}</g>`);
-  out.push(D([at([label.x + 3, label.y + 5.5, 0.8]), at([label.x + label.w - 3, label.y + 5.5, 0.8])], { size: 0.4 }));
+  out.push(mat("crema",
+    S(k.slabOf(label, 0, 0.8, P, 3), { tone: "hi", crease: "none" }) +
+    Ln(k.planOutline(k.insetPlan(label, 1.4), 0.8, P, 3), { tone: "faint" }) +
+    `<g id="fo-label">${k.faceTextSvg(k.topMatrix([label.x + 7, label.y + 6.6], 0.8, P, "x"), "50/125 µm · multimodo", { size: 3.6, tone: "hi" })}</g>` +
+    D([at([label.x + 3, label.y + 5.5, 0.8]), at([label.x + label.w - 3, label.y + 5.5, 0.8])], { size: 0.4 })));
   return out.join("");
 }
 
@@ -87,7 +87,7 @@ function sector() {
   const ring = [];
   for (let a = SECTOR.from; a <= SECTOR.to + 1e-6; a += 1) ring.push(polar(SECTOR.r, a));
   for (let a = SECTOR.to + lead; a <= 360 + SECTOR.from - lead + 1e-6; a += 6) ring.push(polar(9, a));
-  out.push(S(k.extrude(ring, 0, SECTOR.h, P, { bevel: 0.5 }), { tone: "mid" }));
+  out.push(S(k.extrude(ring, 0, SECTOR.h, P, { bevel: 0.5 }), { tone: "hi" }));
   const z = SECTOR.h;
   const tick = (deg, long) => k.lineOnTop(polar(SECTOR.r, deg), polar(SECTOR.r - long, deg), z, P);
   let minor = "", major = "";
@@ -123,7 +123,7 @@ function receiver() {
   const out = [];
   const top = RX_H;
   const seam = k.sideSeam(RX, top - 6, P, 5);
-  out.push(S(k.slabOf(RX, 0, RX_H, P, 5, 0.8), { tone: "mid", inner: Ln(seam, { tone: "faint" }) }));
+  out.push(S(k.slabOf(RX, 0, RX_H, P, 5, 0.8), { tone: "hi", inner: Ln(seam, { tone: "faint" }) }));
   out.push(Ln(k.planOutline(k.insetPlan(RX, 4), top, P, 5), { tone: "faint" }));
   const screws = k.corners(RX, 7.5);
   out.push(Ln(screws.map(([x, y]) => k.ring(x, y, 1.7, top, P, 14)).join(""), { tone: "lo" }));
@@ -150,7 +150,7 @@ function receiver() {
   let marks = "";
   for (let x = 4; x < SCREEN.w; x += 4) marks += `M${x} 0V${x % 8 === 0 ? -2.2 : -1.3}`;
   out.push(
-    `<g transform="${m}"><path class="fo-screen" d="M0 0H${SCREEN.w}V${-SCREEN.h}H0Z"/>` +
+    `<g class="fo-pantalla" transform="${m}"><path class="fo-screen" d="M0 0H${SCREEN.w}V${-SCREEN.h}H0Z"/>` +
       `<path class="iso-line" data-tone="lo" d="${marks}"/>` +
       `<path id="fo-trace" class="iso-line fo-trace" d="M0 -4H${SCREEN.w}"/></g>`,
   );
@@ -181,10 +181,10 @@ function fibre() {
   const out = [];
   // Cubierta (media caña inferior) con sus marcas de metraje, y el tramo pelado de revestimiento.
   const marks = [-205, -160, -115, -45, -25].map((s) => G.arcOf(F, s, R_COAT, P, { from: Math.PI, to: 2 * Math.PI })).join("");
-  out.push(S(G.prismOf(F, half(R_COAT), -LEN, -STUB, P), { tone: "hi", crease: "lo", inner: Ln(marks, { tone: "faint" }) }));
+  out.push(mat("amarillo", S(G.prismOf(F, half(R_COAT), -LEN, -STUB, P), { tone: "hi", crease: "lo", inner: Ln(marks, { tone: "lo" }) })));
   out.push(fill("fo-coat", rect(-LEN + 0.3, -STUB - 0.3, -R_COAT + 0.4, R_COAT - 0.4), ZA));
   out.push(`<path class="fo-coat" d="${faceOf(-STUB, R_COAT - 0.4)}"/>`);
-  out.push(S(G.prismOf(F, half(R_CLAD, 40), -STUB, 0, P), { tone: "hi", crease: "lo" }));
+  out.push(mat("vidrio", S(G.prismOf(F, half(R_CLAD, 40), -STUB, 0, P), { tone: "hi", crease: "lo" })));
   // El plano del corte: franja de revestimiento y, encima, la del núcleo (viva: cambia de ancho).
   out.push(fill("fo-clad", rect(-LEN + 0.3, -STUB, -R_CLAD, R_CLAD), ZA));
   out.push(fill("fo-clad", rect(-STUB - 0.2, -0.35, -R_CLAD + 0.35, R_CLAD - 0.35), ZA));
@@ -202,42 +202,30 @@ const svg = k.figureSvg({
   label:
     "Banco de demostración de fibra óptica. Un láser sobre un brazo giratorio apunta a la cara de entrada de una fibra cortada a lo largo, donde se ven el núcleo, el revestimiento y el recubrimiento. Los rayos rebotan dentro del núcleo hasta un receptor con pantalla. Si el láser entra con más de 32,6 grados, la luz se escapa al revestimiento y se pierde en el recubrimiento.",
   body: [
-    plate(),
-    receiver(),
-    CRADLES.map((x) => cradle(x, "back")).join(""),
-    sector(),
-    `<g id="fo-arm"></g>`,
-    pin(),
+    mat("pizarra", plate()),
+    mat("grafito", receiver()),
+    mat("metal", CRADLES.map((x) => cradle(x, "back")).join("")),
+    mat("crema", sector()),
+    `<g id="fo-arm" class="m-metal"></g>`,
+    mat("metal", pin()),
     fibre(),
-    CRADLES.map((x) => cradle(x, "front")).join(""),
-    `<g id="fo-beam"></g><g id="fo-laser"></g>`,
+    mat("metal", CRADLES.map((x) => cradle(x, "front")).join("")),
+    `<g id="fo-beam"></g><g id="fo-laser" class="m-naranja"></g>`,
   ],
 });
 
 const CSS = `
-.iso{--fo-screen:#0b0e0c}
-.iso[data-theme="light"]{--fo-screen:#eceeeb}
-.fo-coat{fill:var(--anatomy-shade-0);stroke:none}
-.fo-clad{fill:var(--anatomy-shade-2);stroke:none}
-.fo-core{fill:var(--anatomy-top);stroke:none}
-.iso-line.fo-ray{stroke:var(--anatomy-red);stroke-width:1.15px}
-.iso-line.fo-leak{stroke:var(--anatomy-red);stroke-width:.8px}
-.iso-line.fo-trace{stroke:var(--anatomy-red);stroke-width:1.1px}
-.fo-pulse{fill:var(--anatomy-red);stroke:var(--anatomy-paper);stroke-width:.6px}
+.fo-coat{fill:#ffdf7e;stroke:none}
+.fo-clad{fill:#bfdcee;stroke:none}
+.fo-core{fill:#ffffff;stroke:none}
+.iso-line.fo-ray{stroke:var(--anatomy-red);stroke-width:1.9px}
+.iso-line.fo-leak{stroke:var(--anatomy-red);stroke-width:1.2px}
+.iso-line.fo-trace{stroke:#ffd23f;stroke-width:1.7px}
+.fo-pulse{fill:var(--anatomy-red);stroke:#1d1b24;stroke-width:.9px}
 .fo-end{fill:var(--anatomy-red);stroke:none}
-.fo-screen{fill:var(--fo-screen);stroke:var(--anatomy-mid);stroke-width:var(--anatomy-weight)}
+.fo-screen{fill:#14171c;stroke:#1d1b24;stroke-width:1.5px}
+.fo-pantalla{--anatomy-lo:#6f7785}
 .iso-stage{cursor:ew-resize;touch-action:pan-y;outline:none}
-.iso-stage:focus-visible{box-shadow:0 0 0 2px var(--anatomy-mid);border-radius:6px}
-.fo-controls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:space-between;margin:14px 2px 0;font:12px/1.2 var(--anatomy-mono);color:var(--anatomy-text)}
-.fo-seg{display:inline-flex;border:1px solid var(--anatomy-lo);border-radius:8px;overflow:hidden}
-.fo-seg button{all:unset;cursor:pointer;padding:8px 12px;font:inherit;color:var(--anatomy-text)}
-.fo-seg button+button{border-left:1px solid var(--anatomy-lo)}
-.fo-seg button[aria-pressed="true"]{background:var(--anatomy-strong);color:var(--anatomy-card)}
-.fo-seg button:focus-visible{outline:2px solid var(--anatomy-mid);outline-offset:-2px}
-.fo-angle{display:inline-flex;align-items:center;gap:10px;flex:1 1 260px;min-width:0}
-.fo-angle input{flex:1 1 auto;min-width:80px;accent-color:var(--anatomy-red)}
-.fo-angle output{min-width:4.2em;text-align:right;color:var(--anatomy-strong)}
-.fo-angle[data-off]{opacity:.45}
 `;
 
 const MODEL = readFileSync(join(HERE, "model.mjs"), "utf8").replace(/^export /gm, "");
@@ -449,7 +437,7 @@ foDraw();
 `;
 
 const plateBody = `<div class="iso-stage" tabindex="0" role="group" aria-label="Fibra óptica: arrastra a los lados o usa las flechas para girar el láser; pulsa M para cambiar entre multimodo y monomodo">${svg}</div>`;
-const controls = `<div class="fo-controls"><div class="fo-seg" role="group" aria-label="Tipo de fibra"><button type="button" data-mode="mm" aria-pressed="true">Multimodo 50/125</button><button type="button" data-mode="sm" aria-pressed="false">Monomodo 9/125</button></div><label class="fo-angle">Ángulo de entrada<input type="range" min="0" max="${SWEEP}" step="0.5" value="20" aria-label="Ángulo de entrada del láser en grados"><output>20,0°</output></label></div>`;
+const controls = `<div class="fo-controls fig-controles"><div class="fo-seg fig-grupo" role="group" aria-label="Tipo de fibra"><button type="button" data-mode="mm" aria-pressed="true">Multimodo 50/125</button><button type="button" data-mode="sm" aria-pressed="false">Monomodo 9/125</button></div><label class="fo-angle">Ángulo de entrada<input type="range" min="0" max="${SWEEP}" step="0.5" value="20" aria-label="Ángulo de entrada del láser en grados"><output>20,0°</output></label></div>`;
 
 const c = (v, d = 1) => v.toFixed(d).replace(".", ",");
 const card = k.plateHtml({
@@ -458,17 +446,29 @@ const card = k.plateHtml({
   hint: "Arrastra para girar el láser",
   readout: "",
   keys: [
-    { mark: "red", label: "Luz: los rayos y los pulsos que viajan por el núcleo" },
-    { mark: "raised", label: "Corte de la fibra: núcleo en el centro, revestimiento y recubrimiento" },
+    { mark: "red", label: "Luz: los rayos y los pulsos" },
+    { mark: "flat", label: "[#ffffff] Núcleo" },
+    { mark: "flat", label: "[#bfdcee] Revestimiento" },
+    { mark: "flat", label: "[#ffdf7e] Recubrimiento de plástico" },
     { mark: "edge", label: `Marca del limbo: ángulo máximo de entrada, ${c(M.ACCEPT_DEG)}°` },
   ],
+
   caption:
-    `Modelo ampliado de una fibra cortada a lo largo. La luz entra en el núcleo (índice ${c(M.N_CORE, 2)}) y, al llegar al revestimiento (índice ${c(M.N_CLAD, 2)}), rebota sin salirse: es la reflexión interna total. Solo ocurre si el rayo llega muy rasante; por eso el láser no puede entrar con más de ${c(M.ACCEPT_DEG)}°. Si se pasa, en cada rebote una parte de la luz cruza al revestimiento y se pierde en el recubrimiento de plástico. ` +
-    `En multimodo entran rayos con distintos ángulos a la vez: los más inclinados recorren más camino y llegan más tarde, así que el pulso se ensancha en la pantalla del receptor y por eso el multimodo solo sirve hasta unos cientos de metros. En monomodo el núcleo es tan fino que solo cabe un camino, el pulso llega limpio y alcanza kilómetros. ` +
+    `Modelo ampliado de una fibra cortada a lo largo. La luz entra en el núcleo (índice ${c(M.N_CORE, 2)}) y, al llegar al revestimiento (índice ${c(M.N_CLAD, 2)}), rebota sin salirse: es la reflexión interna total. Solo ocurre si el rayo llega muy rasante; por eso el láser no puede entrar con más de ${c(M.ACCEPT_DEG)}°. Si se pasa, en cada rebote una parte de la luz cruza al revestimiento y se pierde en el recubrimiento de plástico. ¶` +
+    `En multimodo entran rayos con distintos ángulos a la vez: los más inclinados recorren más camino y llegan más tarde, así que el pulso se ensancha en la pantalla del receptor y por eso el multimodo solo sirve hasta unos cientos de metros. En monomodo el núcleo es tan fino que solo cabe un camino, el pulso llega limpio y alcanza kilómetros. ¶` +
     `Los índices del modelo están exagerados para que el zigzag se vea: en una fibra de vidrio real se diferencian en torno a un 1 % y los rayos van casi paralelos al eje.`,
   body: plateBody,
 }).replace("</div><figcaption", `</div>${controls}<figcaption`);
 
-const name = theme === "light" ? "fibra-optica-light.html" : "fibra-optica.html";
-writeFileSync(join(HERE, name), k.pageHtml({ title: "Fibra óptica: reflexión interna total", theme, body: `<style>${CSS}.fig-volver{display:inline-block;margin:0 0 18px;font:12px/1 var(--anatomy-mono);color:var(--anatomy-text);text-decoration:none}.fig-volver:hover{color:var(--anatomy-strong)}</style><a class="fig-volver" href="../index.html">← Taller de Redes</a>${card}`, script: kitScript() + live, width: 780 }).replace('<html lang="en">', '<html lang="es">'));
-console.log("wrote", name);
+const out = join(HERE, "../../fibra-optica.html");
+writeFileSync(out, paginaTaller({
+  isoCss: k.ISO_CSS,
+  titulo: "Fibra óptica por dentro",
+  etiqueta: "Tema 2 · Medios de transmisión",
+  h1: "Fibra óptica por dentro",
+  lead: "Una fibra cortada a lo largo. Gira el láser y mira cómo rebota la luz dentro del núcleo, cuándo se escapa y por qué la fibra monomodo llega más lejos.",
+  css: CSS,
+  card,
+  script: kitScript() + live,
+}));
+console.log("wrote", out);

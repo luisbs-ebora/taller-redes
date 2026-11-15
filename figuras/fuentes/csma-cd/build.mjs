@@ -4,6 +4,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import * as M from "./model.mjs";
+import { paginaTaller, mat } from "../marco.mjs";
 
 // La skill Anatomy (MIT, github.com/wheresryan22/anatomy) no va en este repo: indica dónde la tienes clonada.
 const ANATOMY = process.env.ANATOMY ?? "/home/claude/terceros/anatomy";
@@ -12,7 +13,6 @@ const G = await import(`${ANATOMY}/kit/lathe.mjs`);
 const { kitScript } = await import(`${ANATOMY}/scripts/inline-kit.mjs`);
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const theme = process.argv.includes("--dark") ? "dark" : "light";
 const WIDTH = 720;
 const HEIGHT = 430;
 
@@ -80,27 +80,26 @@ const LINES = ROUTES.map((route) => ({ tx: lineOf(offset(route, PAIR)), rx: line
 function plate() {
   const out = [`<path class="iso-halo" d="${k.haloOf(PLATE, -PLATE_H - FOOT_H, PLATE_H, P)}"/>`];
   for (const [x, y] of k.corners(PLATE, 22).sort((a, b) => depth(...a) - depth(...b))) {
-    out.push(S(k.cylinder(x, y, 7, -PLATE_H - FOOT_H, 1.6, P, 28), { tone: "lo" }));
-    out.push(S(k.cylinder(x, y, 5.4, -PLATE_H - FOOT_H + 1.6, FOOT_H - 1.6, P, 28), { tone: "mid" }));
+    out.push(mat("grafito", S(k.cylinder(x, y, 7, -PLATE_H - FOOT_H, 1.6, P, 28), { tone: "hi" }) + S(k.cylinder(x, y, 5.4, -PLATE_H - FOOT_H + 1.6, FOOT_H - 1.6, P, 28), { tone: "hi" })));
   }
-  out.push(S(k.slabOf(PLATE, -PLATE_H, PLATE_H, P, 8, 1.6), { tone: "mid" }));
+  out.push(S(k.slabOf(PLATE, -PLATE_H, PLATE_H, P, 8, 1.6), { tone: "hi" }));
   out.push(Ln(k.planOutline(k.insetPlan(PLATE, 5), 0, P), { tone: "lo" }));
   const screws = k.corners(PLATE, 11);
   out.push(Ln(screws.map(([x, y]) => k.ring(x, y, 2.2, 0, P, 16)).join(""), { tone: "lo" }), D(screws.map(([x, y]) => at([x, y, 0])), { size: 0.5 }));
   const strip = { x: -150, y: PLATE.y + PLATE.d - 13.5, w: 150, d: 6.5, r: 1 };
-  out.push(S(k.slabOf(strip, 0, 0.6, P, 3), { tone: "lo", crease: "none" }));
   const ticks = k.topTicks(strip.x + 4, strip.x + strip.w - 4, 4, 5, strip.y + 0.25, 0.6, [2.2, 3.9], P);
-  out.push(Ln(ticks.minor, { tone: "lo" }), Ln(ticks.major, { tone: "mid" }));
+  out.push(mat("crema", S(k.slabOf(strip, 0, 0.6, P, 3), { tone: "hi", crease: "none" }) + Ln(ticks.minor, { tone: "lo" }) + Ln(ticks.major, { tone: "mid" })));
   const label = { x: 22, y: PLATE.y + PLATE.d - 15, w: 96, d: 10.5, r: 1.2 };
-  out.push(S(k.slabOf(label, 0, 0.8, P, 3), { tone: "mid", crease: "none" }), Ln(k.planOutline(k.insetPlan(label, 1.4), 0.8, P, 3), { tone: "faint" }));
-  out.push(k.faceTextSvg(k.topMatrix([label.x + 7, label.y + 6.6], 0.8, P, "x"), "10BASE-T · semidúplex · 10 Mbit/s", { size: 3.6, tone: "mid" }));
-  out.push(D([at([label.x + 3, label.y + 5.3, 0.8]), at([label.x + label.w - 3, label.y + 5.3, 0.8])], { size: 0.4 }));
+  out.push(mat("crema",
+    S(k.slabOf(label, 0, 0.8, P, 3), { tone: "hi", crease: "none" }) + Ln(k.planOutline(k.insetPlan(label, 1.4), 0.8, P, 3), { tone: "faint" }) +
+    k.faceTextSvg(k.topMatrix([label.x + 7, label.y + 6.6], 0.8, P, "x"), "10BASE-T · semidúplex · 10 Mbit/s", { size: 3.6, tone: "hi" }) +
+    D([at([label.x + 3, label.y + 5.3, 0.8]), at([label.x + label.w - 3, label.y + 5.3, 0.8])], { size: 0.4 })));
   return out.join("");
 }
 
 function wires() {
   const pool = (d, line, way) => [0, 1, 2].map(() => `<path class="cs-sig" data-line="${line}" data-way="${way}" d="${d}" stroke-dasharray="0 99999"/>`).join("");
-  return LINES.map((pair, i) => Ln(pair.tx.d + pair.rx.d, { tone: "lo" }) + pool(pair.tx.d, i, "tx") + pool(pair.rx.d, i, "rx")).join("");
+  return LINES.map((pair, i) => Ln(pair.tx.d + pair.rx.d, { tone: "hi", className: "cs-cable" }) + pool(pair.tx.d, i, "tx") + pool(pair.rx.d, i, "rx")).join("");
 }
 
 // Clavija al pie de la cara donde entra el cable; tapa el extremo de los dos hilos.
@@ -108,18 +107,18 @@ function plug(end, next) {
   const along = Math.abs(next[0] - end[0]) > Math.abs(next[1] - end[1]);
   const sign = along ? Math.sign(next[0] - end[0]) : Math.sign(next[1] - end[1]);
   const plan = along ? { x: sign > 0 ? end[0] : end[0] - 5, y: end[1] - 3.2, w: 5, d: 6.4, r: 0.8 } : { x: end[0] - 3.2, y: sign > 0 ? end[1] : end[1] - 5, w: 6.4, d: 5, r: 0.8 };
-  return S(k.slabOf(plan, 0, 4.2, P, 2, 0.3), { tone: "mid" }) + D([at([plan.x + plan.w / 2, plan.y + plan.d / 2, 4.2])], { size: 0.4 });
+  return mat("blanco", S(k.slabOf(plan, 0, 4.2, P, 2, 0.3), { tone: "hi" }) + D([at([plan.x + plan.w / 2, plan.y + plan.d / 2, 4.2])], { size: 0.4 }));
 }
 
 function station(s, i) {
   const plan = { x: s.x, y: s.y, w: BOX.w, d: BOX.d, r: 3 };
   const top = BOX.h, face = s.y + BOX.d, side = s.x + BOX.w;
   const out = [];
-  out.push(S(k.slabOf(plan, 0, top, P, 5, 0.8), { tone: "mid", inner: Ln(k.sideSeam(plan, top - 5, P, 5), { tone: "faint" }) }));
+  out.push(S(k.slabOf(plan, 0, top, P, 5, 0.8), { tone: "hi", inner: Ln(k.sideSeam(plan, top - 5, P, 5), { tone: "faint" }) }));
   // Tapa: tecla de enviar (viva), placa con la letra y tornillos.
   const key = [s.x + 34, s.y + 13];
   out.push(Ln(k.ring(key[0], key[1], 7.4, top, P, 28), { tone: "lo" }));
-  out.push(`<g class="cs-key">${S(k.cylinder(key[0], key[1], 5.6, top, 2.6, P, 28, 0.5), { tone: "hi" })}</g>`);
+  out.push(`<g class="cs-key m-naranja">${S(k.cylinder(key[0], key[1], 5.6, top, 2.6, P, 28, 0.5), { tone: "hi" })}</g>`);
   out.push(k.faceTextSvg(k.topMatrix([s.x + 7, s.y + 21], top, P, "x"), s.name, { size: 11, tone: "hi" }));
   out.push(D(k.corners(plan, 5).map(([x, y]) => at([x, y, top])), { size: 0.45 }));
   out.push(Ln(k.planOutline({ x: s.x + 6, y: s.y + 27, w: 34, d: 2, r: 1 }, top, P, 3), { tone: "lo" }));
@@ -130,7 +129,7 @@ function station(s, i) {
   out.push(`<g transform="${m}"><path class="cs-screen" d="M0 0H36V-13.5H0Z"/><text class="cs-text" x="18" y="-4.3" font-size="6.2" text-anchor="middle">LIBRE</text></g>`);
   out.push(Ln(slotY(s.x + 10, s.x + 36, face, 3, 4.6), { tone: "lo" }));
   out.push(plug(ROUTES[i][0], ROUTES[i][1]));
-  return `<g class="cs-stn" data-i="${i}" data-state="idle">${out.join("")}</g>`;
+  return `<g class="cs-stn m-crema" data-i="${i}" data-state="idle">${out.join("")}</g>`;
 }
 
 function hub() {
@@ -147,13 +146,13 @@ function hub() {
   const [cx, cy] = at([...col, top]);
   out.push(`<circle class="cs-col" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="3.2"/>`);
   for (const y of [-87, -83, -79]) out.push(Ln(k.planOutline({ x: -35, y, w: 34, d: 1.6, r: 0.8 }, top, P, 3), { tone: "lo" }));
-  out.push(k.faceTextSvg(k.topMatrix([-35, -66.5], top, P, "x"), "HUB", { size: 5.2, tone: "mid" }));
+  out.push(`<g class="cs-rotulo">${k.faceTextSvg(k.topMatrix([-35, -66.5], top, P, "x"), "HUB", { size: 5.2, tone: "mid" })}</g>`);
   out.push(D(k.corners(HUB, 6).map(([x, y]) => at([x, y, top])), { size: 0.45 }));
   // Bocas RJ45: cuatro en la cara +y y una en la cara +x.
   for (const x of [-25, -5, 15, 33]) out.push(Ln(slotY(x - 4, x + 4, face, 6.5, 13), { tone: "mid" }));
   out.push(Ln(slotX(side, -77, -69, 6.5, 13), { tone: "mid" }));
   out.push(ROUTES.map((route) => plug(route[route.length - 1], route[route.length - 2])).join(""));
-  return `<g class="cs-hub">${out.join("")}</g>`;
+  return `<g class="cs-hub m-grafito">${out.join("")}</g>`;
 }
 
 const devices = [
@@ -166,32 +165,26 @@ const svg = k.figureSvg({
   height: HEIGHT,
   label:
     "Banco de prácticas con un hub 10BASE-T y cuatro equipos, A, B, C y D, cada uno unido al hub por un cable con un par de ida y otro de vuelta. Las tramas viajan por los cables; cuando dos equipos envían a la vez, el hub enciende el piloto de colisión y manda una señal de atasco a todos, y cada equipo espera un número al azar de ranuras antes de reintentar.",
-  body: [plate(), wires(), ...devices.map((d) => d.svg)],
+  body: [mat("pizarra", plate()), wires(), ...devices.map((d) => d.svg)],
 });
 
 const CSS = `
-.iso{--cs-screen:#0b0e0c;--cs-off:#2a2a2a}
-.iso[data-theme="light"]{--cs-screen:#eceeeb;--cs-off:#d9d9d6}
-.cs-sig{fill:none;stroke:var(--anatomy-blue);stroke-width:2.1px;stroke-linecap:butt;vector-effect:non-scaling-stroke}
-.cs-sig[data-kind="jam"]{stroke:var(--anatomy-red)}
-.cs-screen{fill:var(--cs-screen);stroke:var(--anatomy-mid);stroke-width:var(--anatomy-weight)}
-.cs-text{font-family:var(--anatomy-mono);font-weight:600;fill:var(--anatomy-strong);letter-spacing:.02em}
-.cs-led{fill:var(--cs-off);stroke:none}
-.cs-led[data-on]{fill:var(--anatomy-blue)}
-.cs-col{fill:var(--cs-off);stroke:none}
-.cs-col[data-on]{fill:var(--anatomy-red)}
+.iso-line.cs-cable{stroke:#1d1b24;stroke-width:1.5px}
+.cs-sig{fill:none;stroke:#ffd23f;stroke-width:3.4px;stroke-linecap:butt;vector-effect:non-scaling-stroke}
+.cs-sig[data-kind="jam"]{stroke:#ff4d3d}
+.cs-screen{fill:#14171c;stroke:#1d1b24;stroke-width:1.5px}
+.cs-text{font-family:var(--anatomy-mono);font-weight:700;fill:#dfe7e1;letter-spacing:.02em}
+.cs-led,.cs-col{fill:#25262e;stroke:#0e0e12;stroke-width:.8px}
+.cs-led[data-on]{fill:#ffd23f}
+.cs-col[data-on]{fill:#ff4d3d}
+.cs-rotulo{--anatomy-mid:#e4e6ee}
 .cs-stn{cursor:pointer}
-.cs-stn[data-state="tx"] .cs-key .iso-top{fill:var(--anatomy-blue)}
-.cs-stn[data-state="jam"] .cs-key .iso-top{fill:var(--anatomy-red)}
-.cs-stn[data-state="tx"] .cs-text{fill:var(--anatomy-blue)}
-.cs-stn[data-state="jam"] .cs-text,.cs-stn[data-state="backoff"] .cs-text{fill:var(--anatomy-red)}
-.cs-stn:hover .cs-key .iso-edge{stroke:var(--anatomy-lit)}
+.cs-stn[data-state="tx"] .cs-key .iso-top{fill:#ffd23f}
+.cs-stn[data-state="jam"] .cs-key .iso-top{fill:#ff4d3d}
+.cs-stn[data-state="tx"] .cs-text{fill:#ffd23f}
+.cs-stn[data-state="jam"] .cs-text,.cs-stn[data-state="backoff"] .cs-text{fill:#ff8f80}
+.cs-stn:hover .cs-key .iso-edge{stroke-width:2.6px}
 .iso-stage{touch-action:manipulation;outline:none}
-.iso-stage:focus-visible{box-shadow:0 0 0 2px var(--anatomy-mid);border-radius:6px}
-.cs-controls{display:flex;flex-wrap:wrap;gap:8px;margin:14px 2px 0;font:12px/1.2 var(--anatomy-mono)}
-.cs-controls button{all:unset;cursor:pointer;padding:8px 12px;border:1px solid var(--anatomy-lo);border-radius:8px;color:var(--anatomy-strong)}
-.cs-controls button:hover{border-color:var(--anatomy-mid)}
-.cs-controls button:focus-visible{outline:2px solid var(--anatomy-mid);outline-offset:1px}
 `;
 
 const MODEL = readFileSync(join(HERE, "model.mjs"), "utf8").replace(/^export /gm, "");
@@ -306,7 +299,7 @@ csDraw();
 `;
 
 const c = (v, d = 1) => v.toFixed(d).replace(".", ",");
-const controls = `<div class="cs-controls" role="group" aria-label="Quién envía"><button type="button" data-send="0">Envía A</button><button type="button" data-send="02">A y C a la vez</button><button type="button" data-send="0123">Los cuatro a la vez</button></div>`;
+const controls = `<div class="cs-controls fig-controles" role="group" aria-label="Quién envía"><button type="button" data-send="0">Envía A</button><button type="button" data-send="02">A y C a la vez</button><button type="button" data-send="0123">Los cuatro a la vez</button></div>`;
 const card = k
   .plateHtml({
     fig: "Fig 2",
@@ -314,17 +307,26 @@ const card = k
     hint: "Pulsa un equipo para que envíe",
     readout: "medio libre",
     keys: [
-      { mark: "blue", label: "Trama de datos: el hub la repite por todos los demás puertos" },
-      { mark: "red", label: "Señal de atasco (jam): avisa a todos de la colisión" },
-      { mark: "lit", label: "Hub: un solo dominio de colisión para los cuatro equipos" },
+      { mark: "flat", label: "[#ffd23f] Trama de datos: el hub la repite por todos los demás puertos" },
+      { mark: "flat", label: "[#ff4d3d] Señal de atasco (jam): avisa a todos de la colisión" },
+      { mark: "flat", label: "[#626675] Hub: un solo dominio de colisión para los cuatro equipos" },
     ],
     caption:
-      `Cuatro equipos comparten un hub 10BASE-T en semidúplex: forman un único dominio de colisión. Cada cable lleva un par de ida y otro de vuelta. Antes de enviar, el equipo escucha el medio; si está libre, transmite y sigue escuchando, y el hub repite la señal por todos los demás puertos. Si dos transmiten a la vez, las señales chocan en el hub, que propaga la colisión a todos sus puertos. El equipo que oye algo por su par de vuelta mientras transmite ha detectado la colisión: deja de transmitir, envía la señal de atasco (jam) de 32 bits y espera un número al azar de ranuras, entre 0 y 2ⁿ − 1 tras la colisión número n (el exponente deja de crecer a partir de 10). Si los dos eligen lo mismo, vuelven a chocar; a los 16 intentos la trama se descarta. Al acabar la espera vuelve a escuchar y, si el medio está ocupado, aguarda a que quede libre más la pausa entre tramas (96 tiempos de bit). ` +
+      `Cuatro equipos comparten un hub 10BASE-T en semidúplex: forman un único dominio de colisión. Cada cable lleva un par de ida y otro de vuelta. ¶Antes de enviar, el equipo escucha el medio; si está libre, transmite y sigue escuchando, y el hub repite la señal por todos los demás puertos. Si dos transmiten a la vez, las señales chocan en el hub, que propaga la colisión a todos sus puertos. ¶El equipo que oye algo por su par de vuelta mientras transmite ha detectado la colisión: deja de transmitir, envía la señal de atasco (jam) de 32 bits y espera un número al azar de ranuras, entre 0 y 2ⁿ − 1 tras la colisión número n (el exponente deja de crecer a partir de 10). Si los dos eligen lo mismo, vuelven a chocar; a los 16 intentos la trama se descarta. ¶Al acabar la espera vuelve a escuchar y, si el medio está ocupado, aguarda a que quede libre más la pausa entre tramas (96 tiempos de bit). ¶` +
       `La ranura real dura 512 tiempos de bit, 51,2 µs a 10 Mbit/s, lo mismo que tarda en enviarse la trama mínima de 64 bytes; aquí va a cámara lenta y dura ${c(TIMING.slot)} s, lo que tarda la señal en ir y volver entre los dos equipos más lejanos.`,
     body: `<div class="iso-stage" tabindex="0" role="group" aria-label="CSMA/CD: pulsa un equipo o las teclas A, B, C y D para que envíe; la barra espaciadora hace que A y C envíen a la vez">${svg}</div>`,
   })
   .replace("</div><figcaption", `</div>${controls}<figcaption`);
 
-const name = theme === "light" ? "csma-cd-light.html" : "csma-cd.html";
-writeFileSync(join(HERE, name), k.pageHtml({ title: "CSMA/CD con un hub", theme, body: `<style>${CSS}.fig-volver{display:inline-block;margin:0 0 18px;font:12px/1 var(--anatomy-mono);color:var(--anatomy-text);text-decoration:none}.fig-volver:hover{color:var(--anatomy-strong)}</style><a class="fig-volver" href="../index.html">← Taller de Redes</a>${card}`, script: kitScript() + live, width: 780 }).replace('<html lang="en">', '<html lang="es">'));
-console.log("wrote", name, "· ranura", TIMING.slot, "s · trama", TIMING.frame.toFixed(1), "s · cables", LENGTHS.join(", "));
+const out = join(HERE, "../../csma-cd.html");
+writeFileSync(out, paginaTaller({
+  isoCss: k.ISO_CSS,
+  titulo: "CSMA/CD con un hub",
+  etiqueta: "1.º ASIR · PAR · Tema 1",
+  h1: "CSMA/CD con un hub",
+  lead: "Cuatro equipos y un hub. Haz que envíen a la vez y sigue la colisión, la señal de atasco y la espera al azar de cada uno.",
+  css: CSS,
+  card,
+  script: kitScript() + live,
+}));
+console.log("wrote", out, "· ranura", TIMING.slot, "s · trama", TIMING.frame.toFixed(1), "s · cables", LENGTHS.join(", "));
