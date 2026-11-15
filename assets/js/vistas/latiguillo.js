@@ -1,5 +1,6 @@
 // latiguillo.js — «Haz el latiguillo y pásale el tester» (Redes locales, Tema 2).
 import { h } from '../util.js';
+import { crearDibujo } from './latiguilloDibujo.js';
 import { HILOS, TAREAS, TAREA_CONSOLA, juzgar, DIAGNOSTICOS, crearLecturas, CABLES, COMPROBADORES, DIAGNOSTICOS_ASIR, crearAsir } from '../practica/Latiguillo.js';
 
 const semillaNueva = () => 1000 + Math.floor(Math.random() * 9000);
@@ -9,39 +10,95 @@ const tester = luces => h('div.lt-tester', { role: 'img', 'aria-label': 'Tester:
   luces.map((l, i) => h('div.lt-fila' + (l.length === 1 && l[0] === i + 1 ? '' : '.mal'), h('span.lt-led.on', String(i + 1)), h('span.lt-cable'),
     Array.from({ length: 8 }, (_, j) => h('span.lt-led' + (l.includes(j + 1) ? '.on' : ''), String(j + 1))))));
 
+const PASOS = ['Pelar', 'Ordenar los hilos', 'Cortar y meter en el RJ45', 'Crimpar', 'Tester'];
+
 function parteHacer() {
-  let tarea, extremos, activo;
-  const enunciado = h('p.lt-tarea'), zona = h('div'), resultado = h('div');
+  let tarea, extremos, activo, crimpado, ocupado = false, fase = '', aviso = '';
+  const enunciado = h('p.lt-tarea'), resultado = h('div'), sueltos = h('div.lt-hilos'), pasos = h('ol.lt-pasos'), ahora = h('p.lt-ahora', { 'aria-live': 'polite' }), cortes = h('span.lt-cortes');
   const probar = h('button.btn', { type: 'button', disabled: true }, 'Crimpar y pasar el tester');
+  const lleno = k => extremos[k].every(Boolean);
+  const quitar = h('button.btn.sec', { type: 'button', onclick: () => {
+    if (ocupado || crimpado[activo]) return;
+    const e = extremos[activo], n = e.filter(Boolean).length;
+    if (!n) return;
+    e[e.lastIndexOf(e.filter(Boolean).pop())] = null;
+    resultado.replaceChildren(); pintar();
+  } }, 'Quitar el último hilo');
+  const dibujo = crearDibujo({
+    alHilo(k, id) { if (ocupado || crimpado[k]) return; activo = k; meter(id); },
+    alPin(k, i) {
+      if (ocupado) return;
+      if (crimpado[k]) { aviso = `El conector del extremo ${k + 1} ya está crimpado: no se puede sacar un hilo. Si está mal, hay que cortarlo y repetir ese extremo.`; pintar(); return; }
+      activo = k;
+      if (extremos[k][i]) { extremos[k][i] = null; resultado.replaceChildren(); }
+      pintar();
+    },
+    alExtremo(k) { if (ocupado || crimpado[k]) return; activo = k; pintar(); },
+  });
+  function meter(id) {
+    const e = extremos[activo], hueco = e.indexOf(null);
+    if (hueco < 0 || e.includes(id)) return;
+    e[hueco] = id;
+    if (!e.includes(null) && !lleno(1 - activo) && !crimpado[1 - activo]) activo = 1 - activo;
+    resultado.replaceChildren(); pintar();
+  }
   function pintar() {
-    const lleno = extremos.every(e => e.every(Boolean));
-    probar.disabled = !lleno;
-    const usados = extremos[activo];
-    zona.replaceChildren(
-      h('div.lt-extremos', extremos.map((e, k) => h('div.lt-extremo' + (k === activo ? '.activo' : ''), { onclick: () => { activo = k; pintar(); } },
-        h('p', h('strong', `Extremo ${k + 1}`), k === activo ? ' · colocando aquí' : ''),
-        h('div.lt-conector', e.map((id, i) => h('button.lt-pin', { type: 'button', 'aria-label': `Pin ${i + 1}: ${id ? HILOS[id] : 'vacío'}`, onclick: ev => { ev.stopPropagation(); activo = k; e[i] = null; resultado.replaceChildren(); pintar(); } }, id ? hilo(id) : h('span.lt-vacio'), h('span.lt-num', String(i + 1))))),
-        h('small', 'Pestaña hacia abajo y el cable hacia ti: el pin 1 es el de la izquierda.')))),
-      h('p', 'Hilos sueltos. Tócalos en el orden en que quieres meterlos; toca un pin para sacar su hilo.'),
-      h('div.lt-hilos', Object.keys(HILOS).map(id => h('button.lt-suelto', { type: 'button', disabled: usados.includes(id), onclick: () => { const hueco = usados.indexOf(null); if (hueco < 0) return; usados[hueco] = id; if (!usados.includes(null) && activo === 0 && extremos[1].includes(null)) activo = 1; resultado.replaceChildren(); pintar(); } }, hilo(id), HILOS[id]))));
+    const hechos = crimpado[0] && crimpado[1], listos = lleno(0) && lleno(1);
+    probar.disabled = !listos || ocupado || hechos;
+    quitar.disabled = ocupado || crimpado[activo] || !extremos[activo].some(Boolean);
+    dibujo.poner({ extremos, activo, crimpado });
+    const usados = extremos[activo], puestos = usados.filter(Boolean).length;
+    sueltos.replaceChildren(...Object.keys(HILOS).map(id => h('button.lt-suelto', { type: 'button', disabled: ocupado || crimpado[activo] || usados.includes(id), onclick: () => meter(id) }, hilo(id), HILOS[id])));
+    const paso = !listos ? 1 : !hechos ? 3 : 4;
+    pasos.replaceChildren(...PASOS.map((t, i) => h('li' + (i < paso ? '.hecho' : i === paso ? '.ahora' : ''), t)));
+    cortes.replaceChildren(...[0, 1].filter(k => crimpado[k] && !ocupado).map(k => h('button.btn.sec', { type: 'button', onclick: () => cortar(k) }, `Cortar el conector ${k + 1} y repetirlo`)));
+    const otro = 2 - activo;
+    ahora.textContent = aviso || (ocupado ? (fase === 'tester' ? 'El tester manda una señal por cada hilo del extremo 1 y enciende la luz del pin al que llega en el extremo 2.' : 'La crimpadora aprieta los contactos contra los hilos y sujeta la cubierta.')
+      : hechos ? 'Cable crimpado y comprobado. Si no es lo que se pedía, corta un conector y repite ese extremo.'
+      : listos ? 'Los dos extremos están cortados rectos y metidos hasta el fondo de su RJ45. Falta crimpar.'
+      : lleno(activo) ? `Extremo ${activo + 1} listo. Ahora el extremo ${otro}.`
+      : puestos ? `Extremo ${activo + 1}: llevas ${puestos} de 8 hilos. El siguiente va al pin ${usados.indexOf(null) + 1}.`
+      : `Extremo ${activo + 1}: los cuatro pares ya están fuera de la cubierta. Toca los hilos en el orden en que van, del pin 1 al 8.`);
+    aviso = '';
+  }
+  function vaciar() {
+    dibujo.parar(); ocupado = false;
+    extremos = [Array(8).fill(null), Array(8).fill(null)]; crimpado = [false, false]; activo = 0;
+    resultado.replaceChildren(); dibujo.brotar(0); dibujo.brotar(1); pintar();
+  }
+  function cortar(k) {
+    dibujo.parar();
+    extremos[k] = Array(8).fill(null); crimpado[k] = false; activo = k;
+    resultado.replaceChildren(); dibujo.brotar(k); pintar();
   }
   function nueva(fija) {
     tarea = fija && fija.id ? fija : TAREAS[Math.random() < 0.6 ? 0 : 1 + Math.floor(Math.random() * 2)];
-    extremos = [Array(8).fill(null), Array(8).fill(null)]; activo = 0;
     enunciado.replaceChildren('Haz ', h('strong', tarea.texto), '.');
-    resultado.replaceChildren(); pintar();
+    vaciar();
   }
-  probar.addEventListener('click', () => {
+  probar.addEventListener('click', async () => {
+    if (ocupado || !lleno(0) || !lleno(1)) return;
     const r = juzgar(tarea, extremos[0], extremos[1]);
+    ocupado = true; fase = 'crimpar'; crimpado = [true, true]; resultado.replaceChildren(); pintar();
+    await dibujo.crimpar();
+    if (!ocupado) return;
+    fase = 'tester'; pintar();
+    const entero = await dibujo.probar(r.mapa);
+    if (!entero) return;
+    ocupado = false; pintar();
     resultado.replaceChildren(tester(r.mapa.map(p => [p])), h('p.lt-veredicto.' + (r.ok ? 'ok' : 'ko'), r.texto));
   });
   const el = h('section.tarjeta.lt-bloque',
     h('h2', h('span.etiqueta', 'Parte 1'), ' Haz el latiguillo'),
-    enunciado, zona,
-    h('div.lt-barra', probar, h('button.btn.sec', { type: 'button', onclick: () => { extremos = [Array(8).fill(null), Array(8).fill(null)]; activo = 0; resultado.replaceChildren(); pintar(); } }, 'Vaciar'), h('button.btn.sec', { type: 'button', onclick: () => nueva() }, 'Otro cable'), h('button.btn.sec', { type: 'button', onclick: () => nueva(TAREA_CONSOLA) }, 'Cable de consola (ASIR)')),
+    enunciado, pasos,
+    h('div.lt-escena', dibujo.el),
+    ahora,
+    h('p.lt-nota', 'Pestaña hacia abajo y el cable hacia ti: el pin 1 es el de la izquierda. Toca un hilo suelto (en el dibujo o en la lista) para meterlo en el siguiente pin; toca un pin para sacar su hilo.'),
+    sueltos,
+    h('div.lt-barra', probar, cortes, quitar, h('button.btn.sec', { type: 'button', onclick: vaciar }, 'Empezar de cero'), h('button.btn.sec', { type: 'button', onclick: () => nueva() }, 'Otro cable'), h('button.btn.sec', { type: 'button', onclick: () => nueva(TAREA_CONSOLA) }, 'Cable de consola (ASIR)')),
     resultado);
   nueva();
-  return el;
+  return { el, destruir: () => dibujo.destruir() };
 }
 
 function parteTester() {
@@ -117,10 +174,11 @@ function parteAsir() {
 }
 
 export function vistaLatiguillo() {
+  const hacer = parteHacer();
   return { el: h('section.lt',
     h('div.inicio-cab',
       h('span.etiqueta', 'Tema 2 · Conectores y herramientas'),
       h('h1', 'Haz el latiguillo y pásale el tester'),
       h('p.lead', 'Ordena los ocho hilos en los dos conectores RJ45, crímpalos y mira qué dice el tester. Después, diagnostica los cables de otros. No se guarda nada y no tiene nota.')),
-    parteHacer(), parteTester(), parteAsir()) };
+    hacer.el, parteTester(), parteAsir()), destruir: hacer.destruir };
 }

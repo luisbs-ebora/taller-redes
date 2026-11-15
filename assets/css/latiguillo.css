@@ -4,17 +4,6 @@
 .lt-bloque h2 { margin: 0 0 8px; font-size: 22px; }
 .lt-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 12px 0; }
 .lt-tarea { font-size: 19px; }
-.lt-extremos { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin: 10px 0; }
-.lt-extremo { padding: 12px; border: 2px solid var(--linea); border-radius: 12px; background: var(--papel); cursor: pointer; }
-.lt-extremo.activo { border-color: var(--azul); }
-.lt-extremo p { margin: 0 0 8px; }
-.lt-extremo small { color: var(--tinta-2); }
-.lt-conector { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; padding: 8px 8px 4px; border: 2px solid var(--tinta); border-radius: 8px 8px 3px 3px; background: var(--superficie); margin-bottom: 6px; }
-.lt-pin { all: unset; cursor: pointer; display: grid; justify-items: center; gap: 3px; }
-.lt-pin:focus-visible { outline: 2px solid var(--azul); outline-offset: 2px; border-radius: 4px; }
-.lt-pin .lt-hilo, .lt-vacio { display: block; width: 100%; height: 54px; box-sizing: border-box; border-radius: 4px; }
-.lt-vacio { border: 2px dashed var(--linea); }
-.lt-num { font: 700 13px var(--f-mono); color: var(--tinta-2); }
 .lt-hilo { display: block; width: 22px; height: 22px; border-radius: 4px; border: 2px solid var(--tinta); box-sizing: border-box; background: var(--c); }
 .lt-hilo[data-hilo="n"] { --c: #e8811a; } .lt-hilo[data-hilo="v"] { --c: #2e9e4f; } .lt-hilo[data-hilo="a"] { --c: #2a62c9; } .lt-hilo[data-hilo="m"] { --c: #7a4a22; }
 .lt-hilo[data-hilo="bn"] { background: repeating-linear-gradient(135deg, #fff 0 5px, #e8811a 5px 10px); }
@@ -41,3 +30,53 @@
 .lt-caso.ok { border-color: var(--bien); background: var(--bien-2); }
 .lt-caso.ko { border-color: var(--mal); background: var(--mal-2); }
 .lt-caso .lt-pista { border: 0; padding: 0; margin: 0; }
+
+/* ---------- El dibujo animado del latiguillo ---------- */
+.lt-pasos { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 10px 0; counter-reset: paso; }
+.lt-pasos li { counter-increment: paso; padding: 5px 12px; border: 2px solid var(--linea); border-radius: 999px; font: 700 14px var(--f-texto); color: var(--tinta-2); background: var(--papel); }
+.lt-pasos li::before { content: counter(paso) ' · '; }
+.lt-pasos li.hecho { border-color: var(--bien); background: var(--bien-2); color: var(--tinta); }
+.lt-pasos li.hecho::before { content: '✓ '; color: var(--bien); }
+.lt-pasos li.ahora { border-color: var(--azul); background: var(--azul-2); color: var(--tinta); }
+.lt-escena { border: 2px solid var(--tinta); border-radius: 14px; background: var(--papel); overflow: hidden; }
+.lt-ahora { min-height: 2.9em; margin: 10px 0 4px; font-weight: 700; }
+.lt-nota { margin: 0 0 10px; color: var(--tinta-2); font-size: 15px; }
+.lt-cortes { display: contents; }
+.ld { display: block; width: 100%; height: auto; touch-action: manipulation; }
+.ld-zona { fill: transparent; stroke: transparent; stroke-width: 2.5; stroke-dasharray: 7 6; cursor: pointer; }
+.ld-zona.activo { stroke: var(--azul); fill: color-mix(in srgb, var(--azul-2) 28%, transparent); }
+.ld-guia { stroke: var(--linea); stroke-width: 2; stroke-dasharray: 3 5; }
+.ld-num { font: 700 14px var(--f-mono); fill: var(--tinta-2); }
+.ld-rotulo { font: 700 15px var(--f-titulo); fill: var(--tinta-2); }
+.ld-funda-borde { fill: none; stroke: var(--tinta); stroke-width: 27; }
+.ld-funda { fill: none; stroke: #4f79bd; stroke-width: 21; }
+.ld-boca { fill: none; stroke: var(--tinta); stroke-width: 3.5; stroke-linecap: round; }
+.ld-hilo path { fill: none; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.ld-hilo:not(.puesto) { cursor: pointer; }
+.ld-hilo:not(.puesto) .ld-h-borde { pointer-events: stroke; stroke-width: 12; }
+.ld-hilo:not(.puesto):hover .ld-h-borde { stroke: var(--azul); }
+.ld-h-borde { stroke: var(--tinta); stroke-width: 10.5; }
+.ld-h-base { stroke-width: 6.5; }
+.ld-h-raya { stroke-width: 6.5; stroke-dasharray: 6 8; stroke-linecap: butt !important; }
+.ld-tijera { stroke: var(--mal); stroke-width: 2; stroke-dasharray: 6 4; }
+.ld-tijera-t { font-size: 18px; fill: var(--mal); }
+.ld-rj { fill: color-mix(in srgb, var(--superficie) 24%, transparent); stroke: var(--tinta); stroke-width: 3; }
+.ld-rj-linea { stroke: var(--tinta); stroke-width: 1.2; opacity: .35; }
+.ld-rj-t { font: 700 11px var(--f-mono); fill: var(--tinta-2); }
+.ld-contacto { fill: #e0b02a; stroke: var(--tinta); stroke-width: 1.5; }
+.ld-cuna { fill: var(--tinta); }
+.ld-clac { font: 800 17px var(--f-titulo); fill: var(--tinta); paint-order: stroke; stroke: var(--superficie); stroke-width: 5; }
+.ld-pin { fill: transparent; cursor: default; outline: none; }
+.ld-pin.lleno { cursor: pointer; }
+.ld-pin.lleno:hover, .ld-pin:focus-visible { fill: color-mix(in srgb, var(--azul) 16%, transparent); stroke: var(--azul); stroke-width: 2; }
+.ld-t-caja { fill: var(--superficie); stroke: var(--tinta); stroke-width: 3; }
+.ld-t-puerto { fill: var(--tinta); }
+.ld-t-titulo { font: 700 13px var(--f-mono); fill: var(--tinta-2); letter-spacing: .04em; }
+.ld-led { fill: var(--papel-2); stroke: var(--linea); stroke-width: 2; }
+.ld-led.on { fill: var(--bien); stroke: var(--tinta); }
+.ld-led.on.otro { fill: var(--ambar); }
+.ld-led-n { font: 700 11px var(--f-mono); fill: var(--tinta); pointer-events: none; }
+.ld-pulso { stroke-width: 3; }
+@media (max-width: 620px) {
+  .ld-num { font-size: 21px; } .ld-rotulo { font-size: 22px; } .ld-t-titulo { font-size: 17px; } .ld-led-n { font-size: 13px; } .ld-rj-t { font-size: 15px; }
+}
