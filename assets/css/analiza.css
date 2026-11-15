@@ -22,3 +22,8 @@
 .an-campo.ko { border-color: var(--mal); background: var(--mal-2); }
 .an-pista { margin: 4px 0 0; font-size: 15px; }
 .an-enlace { margin: 6px 0 0; }
+.an-indice { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
+.an-bloque { scroll-margin-top: 84px; }
+.an-nota { margin-left: 10px; vertical-align: middle; }
+.an-campo { min-width: 0; }
+.an-campo select { width: 100%; }

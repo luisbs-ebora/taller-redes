@@ -1,8 +1,10 @@
-// Analiza.js — «Analiza la red» (1.º ASIR · PAR, Tema 1, sección 6): genera un caso distinto por semilla y lo corrige.
-// Cinco bloques: dispositivos y capas, encapsulamiento, dominios de colisión y de difusión, la trama Ethernet II
-// y el retroceso de CSMA/CD.
+// Analiza.js — «Analiza la red» (1.º ASIR · PAR, Tema 1): genera un caso distinto por semilla y lo corrige.
+// Ocho bloques, uno o dos por sección de los apuntes: tipos de red y conmutación (sección 1), topologías y arquitectura
+// por capas (2), números, máscaras y direcciones (3), dispositivos y capas (4), encapsulamiento (5) y, de la sección 6,
+// dominios de colisión y de difusión, la trama Ethernet II y el retroceso de CSMA/CD.
 // Las reglas son las de los apuntes: hub = un dominio de colisión; switch = uno por puerto; router = uno por interfaz
 // y separa la difusión; trama de 64 a 1518 bytes; espera de 0 a 2ⁿ − 1 ranuras (tope en n = 10) de 512 tiempos de bit.
+// Los bloques de las secciones 1 a 3 salen de las hojas de ejercicios 1, 2 y 3 y de sus solucionarios.
 
 export const NOMBRES_CAPA = ['Física', 'Enlace de datos', 'Red', 'Transporte', 'Sesión', 'Presentación', 'Aplicación'];
 
@@ -84,6 +86,101 @@ const LOGICAS = [
   ['una red Token Ring', 'Paso de testigo', 'Solo transmite quien tiene el testigo, aunque físicamente fuera una estrella.'],
 ];
 
+// ---------- Sección 1 (hoja de ejercicios 1): tipos de red, elementos, conmutación y velocidad ----------
+const REDES = [
+  ['La red de los 25 ordenadores de la sede, conectados por cable a los switches', 'LAN', 'Privada', 'Cableada', 'Es la red de un edificio, de la propia empresa y por cable.'],
+  ['La conexión que une las sedes de tres ciudades a través de un operador', 'WAN', 'Pública', 'Cableada', 'Une ciudades distintas y la red es del operador: la empresa solo contrata el servicio. Lo normal es que vaya por fibra.'],
+  ['Los auriculares Bluetooth que un comercial usa con su móvil', 'PAN', 'Privada', 'Inalámbrica', 'Son unos pocos metros alrededor de una persona.'],
+  ['La red Wi‑Fi para clientes de la sala de espera de la oficina', 'WLAN', 'Privada', 'Inalámbrica', 'Aunque la usen los clientes, es de la empresa, que decide quién entra.'],
+  ['La red móvil 5G con la que los comerciales se conectan desde la carretera', 'WAN', 'Pública', 'Inalámbrica', 'Cubre todo el país y es de un operador que presta servicio por contrato.'],
+  ['La fibra que une dos edificios de la empresa separados 300 m dentro de la misma parcela', 'LAN', 'Privada', 'Cableada', 'Dos edificios próximos de la misma organización (un campus) siguen siendo una LAN, aunque el enlace sea de fibra.'],
+  ['El anillo de fibra propio con el que un ayuntamiento une sus sedes repartidas por la ciudad', 'MAN', 'Privada', 'Cableada', 'Abarca una ciudad: es una red metropolitana. Aquí el anillo es del propio ayuntamiento.'],
+  ['El reloj inteligente enlazado por Bluetooth con el móvil', 'PAN', 'Privada', 'Inalámbrica', 'Son unos pocos metros alrededor de una persona.'],
+  ['Los portátiles de la oficina conectados al punto de acceso Wi‑Fi de la empresa', 'WLAN', 'Privada', 'Inalámbrica', 'Es la versión inalámbrica de la LAN de la empresa.'],
+  ['La línea de fibra del proveedor de Internet que llega hasta el router de la sede', 'WAN', 'Pública', 'Cableada', 'Es la red del operador, que presta servicio a terceros mediante contrato.'],
+];
+const FUNCIONAL = [
+  ['Los empleados guardan sus documentos en un servidor de ficheros de la sede', 'cs'],
+  ['Dos comerciales se pasan una presentación compartiendo una carpeta directamente entre sus portátiles', 'p2p'],
+  ['Todos los puestos imprimen a través de un servidor de impresión', 'cs'],
+  ['Cuatro equipos comparten archivos entre sí y ninguno hace de equipo central', 'p2p'],
+  ['Los navegadores de la oficina piden las páginas a un servidor web', 'cs'],
+];
+const CONMUTACION = [
+  ['Se reserva un camino exclusivo entre los dos extremos durante toda la comunicación, aunque nadie transmita', 'circuitos'],
+  ['La información se divide en fragmentos independientes que pueden ir por caminos distintos y se reensamblan en el destino', 'paquetes'],
+  ['Es la de la red telefónica tradicional', 'circuitos'],
+  ['Es la aportación clave de ARPANET en 1969', 'paquetes'],
+  ['Aprovecha mejor los enlaces cuando el tráfico va a ráfagas, como al navegar', 'paquetes'],
+];
+const TECNOLOGIA = [
+  ['La Wi‑Fi de la biblioteca, que va más lenta cuantos más alumnos se conectan', 'difusion', 'Todos comparten el mismo canal de radio y solo puede transmitir uno a la vez: cuantos más son, menos toca a cada uno.'],
+  ['Los enlaces entre los routers de un operador', 'punto', 'Cada enlace une solo dos equipos y el mensaje va de router en router hasta el destino.'],
+  ['Una Ethernet antigua con todos los equipos en el mismo cable coaxial', 'difusion', 'Todos comparten el mismo cable: lo que transmite uno llega a todos.'],
+  ['El camino que muestra tracert, salto a salto, hasta un servidor de Internet', 'punto', 'Fuera de la red local los paquetes viajan de router en router por enlaces que unen solo dos equipos.'],
+];
+const ELEMENTOS = [
+  ['Un switch', 'intermedio'], ['Una impresora de red', 'final'], ['Un cortafuegos', 'intermedio'], ['La fibra óptica', 'medio'], ['El DNS', 'servicio'],
+  ['Un punto de acceso Wi‑Fi', 'intermedio'], ['Un servidor', 'final'], ['Un teléfono IP', 'final'], ['El DHCP', 'servicio'], ['Un router', 'intermedio'],
+  ['El cable de par trenzado', 'medio'], ['Una cámara de videovigilancia IP', 'final'], ['Las ondas de radio de la Wi‑Fi', 'medio'],
+];
+export const NOMBRES_ELEMENTO = { final: 'Dispositivo final', intermedio: 'Dispositivo intermedio', medio: 'Medio de transmisión', servicio: 'Servicio o protocolo' };
+const HITOS = [
+  ['La patente del teléfono', 1876, '1876'], ['La primera conexión de ARPANET', 1969, '1969'], ['El desarrollo de Ethernet en Xerox PARC', 1973, '1973'],
+  ['La adopción de TCP/IP en ARPANET', 1983, '1983'], ['La World Wide Web del CERN', 1990, '1989-1991'], ['La norma IEEE 802.11, base de la Wi‑Fi', 1997, '1997'],
+  ['El lanzamiento comercial de la red 5G en España', 2019, '2019'],
+];
+const IPS = [['10.4.7.20', true], ['172.16.5.9', true], ['172.31.200.1', true], ['192.168.1.50', true], ['172.32.0.5', false], ['192.169.1.1', false], ['8.8.8.8', false], ['11.0.0.7', false], ['172.15.9.9', false], ['193.168.1.1', false]];
+
+// ---------- Sección 2 (hoja de ejercicios 2): topologías comparadas y arquitectura por capas ----------
+export const EFECTOS = { toda: 'Toda la red se queda sin servicio', uno: 'Solo afecta a ese equipo', rama: 'Se queda sin red esa rama; el resto sigue', otro: 'Nadie se queda sin red: el tráfico va por otro camino' };
+const FALLOS = [
+  ['En un bus, se corta el cable troncal', 'toda', 'Todos comparten ese único cable: si se corta, la señal deja de llegar o rebota y afecta a todos.'],
+  ['En un bus, se avería uno de los equipos', 'uno', 'El cable troncal sigue entero: un equipo averiado no afecta al resto.'],
+  ['En una estrella, se avería el cable de un equipo', 'uno', 'Cada equipo tiene su propio cable hasta el dispositivo central: solo se queda sin red ese equipo.'],
+  ['En una estrella, falla el switch central', 'toda', 'El dispositivo central es un punto único de fallo.'],
+  ['En un anillo simple, se corta un enlace', 'toda', 'En un anillo simple, la caída de un nodo o de un enlace interrumpe la comunicación.'],
+  ['En una estrella extendida, falla el switch de la segunda planta', 'rama', 'Un switch intermedio caído deja sin servicio a toda su rama; las demás plantas siguen funcionando.'],
+  ['En una malla, se corta un enlace', 'otro', 'Hay caminos alternativos: el tráfico va por otra ruta.'],
+  ['En un anillo doble de fibra, se corta uno de los dos anillos', 'otro', 'El tráfico puede circular en sentido contrario por el otro anillo.'],
+];
+export const CONCEPTOS = ['Protocolo', 'Servicio', 'Interfaz', 'PDU', 'Capa o nivel', 'Arquitectura propietaria', 'Arquitectura abierta'];
+const DEFINICIONES = [
+  ['Reglas que siguen la misma capa de dos equipos distintos para entenderse', 'Protocolo'],
+  ['Lo que una capa ofrece a la capa inmediatamente superior', 'Servicio'],
+  ['Punto de contacto entre dos capas adyacentes de un mismo equipo', 'Interfaz'],
+  ['Bloque de datos más la información de control que intercambian dos capas pares', 'PDU'],
+  ['Conjunto de funciones relacionadas que resuelve una parte de la comunicación', 'Capa o nivel'],
+  ['Arquitectura de un fabricante concreto, como SNA o AppleTalk', 'Arquitectura propietaria'],
+  ['Arquitectura cuyas especificaciones son públicas, como TCP/IP', 'Arquitectura abierta'],
+];
+const WAN = [
+  ['Un enlace dedicado entre dos sedes', 'Punto a punto'],
+  ['Las sucursales solo se conectan con la sede central, y todo lo que se envían entre ellas pasa por la central', 'Concentrador y radios'],
+  ['Varias sedes con enlaces entre sí, para que el fallo de un enlace no aísle a ninguna', 'Malla'],
+];
+
+// ---------- Sección 3 (hoja de ejercicios 3): numeración, máscaras, AND y direcciones MAC ----------
+const MASCARAS = [['255.255.255.0', true], ['255.255.240.0', true], ['255.255.255.192', true], ['255.254.0.0', true], ['255.255.255.250', false], ['255.0.255.0', false], ['255.255.255.193', false], ['255.240.255.0', false], ['255.255.0.255', false]];
+export const ERRORES_DIR = { bien: 'Es correcta', octeto: 'No: un octeto pasa de 255', digitos: 'No: le faltan o le sobran dígitos', nohex: 'No: tiene un dígito que no es hexadecimal' };
+const DIRECCIONES_RARAS = [
+  ['la dirección IPv4 192.168.1.256', 'octeto', '256 necesitaría 9 bits: un octeto tiene 8 y va de 0 a 255.'],
+  ['la dirección IPv4 10.300.2.1', 'octeto', '300 no cabe en un octeto, que va de 0 a 255.'],
+  ['la MAC 00-1A-2B-3C-4D', 'digitos', 'Solo tiene 10 dígitos: una MAC son 12 dígitos hexadecimales (48 bits, 6 octetos).'],
+  ['la MAC 00-1A-2B-3C-4D-5E-6F', 'digitos', 'Tiene 14 dígitos: una MAC son 12 dígitos hexadecimales (48 bits, 6 octetos).'],
+  ['la MAC 00-1A-2G-3C-4D-5E', 'nohex', 'G no es un dígito hexadecimal: van del 0 al 9 y de la A a la F.'],
+  ['la MAC 3C-52-0A-10-20-30', 'bien', 'Son 12 dígitos hexadecimales válidos.'],
+  ['la MAC 08:00:27:5c:e0:01', 'bien', 'En Linux se escribe con dos puntos y en minúsculas, pero es la misma notación: 12 dígitos hexadecimales.'],
+  ['la dirección IPv4 172.16.45.130', 'bien', 'Sus cuatro octetos están entre 0 y 255.'],
+];
+const BITS = [['una dirección IPv4', 32], ['una dirección MAC', 48], ['una dirección IPv6', 128], ['un octeto', 8], ['un dígito hexadecimal', 4], ['un número de puerto TCP o UDP', 16]];
+const OUIS = [[0x00, 0x1A, 0x2B], [0x3C, 0x52, 0x0A], [0x08, 0x00, 0x27], [0xB8, 0x27, 0xEB], [0x00, 0x50, 0x56]];
+const aOctetos = n => [n >>> 24, (n >>> 16) & 255, (n >>> 8) & 255, n & 255];
+const deOctetos = o => ((o[0] << 24) | (o[1] << 16) | (o[2] << 8) | o[3]) >>> 0;
+const mascaraDe = p => (p ? (0xffffffff << (32 - p)) >>> 0 : 0);
+const bin8 = v => v.toString(2).padStart(8, '0');
+export const puntos = o => o.join('.');
+
 export function crearCaso(semilla) {
   const r = azar(semilla);
   // Bloque 1 · La red: un router y, en cada interfaz, un switch (a veces con un hub colgando) o un hub.
@@ -125,9 +222,36 @@ export function crearCaso(semilla) {
 
   const topo = { fisica: r.de(TOPOLOGIAS), logica: r.de(LOGICAS), sedes: r.n(4, 9) };   // sección 2, también al final
 
+  // Secciones 1, 2 y 3 (hojas de ejercicios 1, 2 y 3). También al final, para no cambiar los casos anteriores.
+  const red0 = r.de(REDES), red1 = r.de(REDES.filter(x => x[1] !== red0[1]));
+  const hito0 = r.de(HITOS), hito1 = r.de(HITOS.filter(x => x[1] !== hito0[1]));
+  const [cantidad, unidad] = r.de([[500, 'MB'], [800, 'MB'], [100, 'MB'], [1, 'GB'], [2, 'GB'], [4, 'GB'], [5, 'GB']]);
+  const megabits = cantidad * (unidad === 'GB' ? 8000 : 8), velocidad = r.de([100, 100, 1000, 10]);
+  const tipos = { redes: [red0, red1], funcional: r.de(FUNCIONAL), conmutacion: r.de(CONMUTACION), tecnologia: r.de(TECNOLOGIA), elemento: r.de(ELEMENTOS), hitos: [hito0, hito1],
+    copia: { cantidad, unidad, megabits, velocidad, segundos: megabits / velocidad }, ip: r.de(IPS) };
+
+  const fallo0 = r.de(FALLOS), fallo1 = r.de(FALLOS.filter(x => x[1] !== fallo0[1]));
+  const def0 = r.de(DEFINICIONES), def1 = r.de(DEFINICIONES.filter(x => x !== def0));
+  const arq = { enlaces: { topologia: r.de(['estrella', 'anillo simple']), n: r.n(5, 12) }, fallos: [fallo0, fallo1], definiciones: [def0, def1], wan: r.de(WAN) };
+
+  const prefijo = r.de([18, 19, 20, 21, 22, 26, 27, 28]);
+  const ip = prefijo <= 22 ? [172, 16 + r.n(0, 15), r.n(1, 254), r.n(1, 254)] : [192, 168, r.n(0, 254), r.n(1, 254)];
+  const mascara = mascaraDe(prefijo), bloque = 2 ** (32 - prefijo), redDir = (deOctetos(ip) & mascara) >>> 0;
+  const misma = r.prob(0.5), salto = r.n(1, bloque - 2);
+  const otra = misma ? redDir + (redDir + salto === deOctetos(ip) ? (salto % (bloque - 2)) + 1 : salto) : redDir + bloque + salto;
+  const mac1 = [...r.de(OUIS), byte(), byte(), byte()], mismoFab = r.prob(0.5);
+  const mac2 = [...(mismoFab ? mac1.slice(0, 3) : r.de(OUIS.filter(o => o[0] !== mac1[0] || o[1] !== mac1[1])) ), byte(), byte(), byte()];
+  const grupo = r.prob(0.5), primero = (r.n(0, 127) << 1) | (grupo ? 1 : 0);
+  const num = {
+    dec: r.n(17, 254), bin: r.n(17, 254), hex: r.n(16, 255), aHex: r.n(16, 255),
+    prefijoDe: r.de([8, 12, 16, 19, 20, 22, 24, 25, 26, 27, 30]), mascaraDe: r.de([10, 16, 18, 20, 21, 23, 24, 26, 28]),
+    valida: r.de(MASCARAS), red: { ip, prefijo, mascara: aOctetos(mascara), red: aOctetos(redDir) }, otra: { ip: aOctetos(otra >>> 0), misma },
+    rara: r.de(DIRECCIONES_RARAS), mac1, mac2, mismoFab, ig: { mac: [primero, byte(), byte(), byte(), byte(), byte()], grupo }, bits: r.de(BITS), comb: r.de([4, 8, 10, 16]),
+  };
+
   return {
     semilla,
-    topo,
+    topo, tipos, arq, num,
     extra: { funciones: [f1, f2], incidencia, servicio, protoCapa, variante },
     capas: { dispositivos, pdu, direccion },
     encap: { tcp, app, cab, segmento: app + cab, paquete: app + cab + 20, trama: app + cab + 20 + 18, protocolo: tcp ? 6 : 17, routers, ttl, tramas: routers + 1, ttlFinal: ttl - routers },
@@ -149,7 +273,49 @@ export function corregir(caso, resp) {
     ? `interfaz ${k + 1}: 1 (el hub y todo lo que cuelga de él)`
     : `interfaz ${k + 1}: ${i.pcs + (i.hub ? 1 : 0) + 1} (${es(i.pcs, 'puerto con PC', 'puertos con PC')}${i.hub ? ', 1 puerto con el hub' : ''} y 1 puerto hacia el router)`);
   const que = csma.quien === 'chocan' ? 'Vuelven a chocar' : `Envía primero ${csma.quien}`;
+  const { tipos, arq, num } = caso;
+  const sinEspacios = t => String(t ?? '').replace(/\s/g, '');
+  const mascaraTexto = p => puntos(aOctetos(mascaraDe(p)));
+  const enBinario = o => o.map(bin8).join('.');
+  const parcial = Math.min(3, Math.floor(num.red.prefijo / 8));   // el octeto donde la máscara deja de ser 255
+  const antes = tipos.hitos[0][1] < tipos.hitos[1][1] ? 0 : 1;
+  const nuevos = [
+    ...tipos.redes.flatMap((x, i) => [
+      { id: `red${i}alc`, ok: resp[`red${i}alc`] === x[1], correcta: x[1], porque: x[4] },
+      { id: `red${i}tit`, ok: resp[`red${i}tit`] === x[2], correcta: x[2], porque: x[2] === 'Privada' ? 'Es privada la red que pertenece a una organización, que la gestiona y decide quién accede.' : 'Es pública la red que pertenece a un operador que presta servicio a terceros mediante contrato, aunque la empresa pague por usarla.' },
+      { id: `red${i}med`, ok: resp[`red${i}med`] === x[3], correcta: x[3], porque: x[3] === 'Cableada' ? 'Usa un medio guiado (par trenzado o fibra).' : 'Usa ondas de radio.' },
+    ]),
+    { id: 'funcional', ok: resp.funcional === tipos.funcional[1], correcta: tipos.funcional[1] === 'cs' ? 'Cliente-servidor' : 'Entre iguales (P2P)', porque: 'Cliente-servidor: unos equipos ofrecen el servicio y otros lo piden. Entre iguales: todos hacen a la vez de cliente y de servidor.' },
+    { id: 'conmutacion', ok: resp.conmutacion === tipos.conmutacion[1], correcta: tipos.conmutacion[1] === 'circuitos' ? 'Conmutación de circuitos' : 'Conmutación de paquetes', porque: 'Circuitos: camino exclusivo reservado durante toda la comunicación (telefonía tradicional). Paquetes: fragmentos independientes que comparten los enlaces (ARPANET, Internet).' },
+    { id: 'tecnologia', ok: resp.tecnologia === tipos.tecnologia[1], correcta: tipos.tecnologia[1] === 'difusion' ? 'Difusión' : 'Punto a punto', porque: tipos.tecnologia[2] },
+    { id: 'elemento', ok: resp.elemento === tipos.elemento[1], correcta: NOMBRES_ELEMENTO[tipos.elemento[1]], porque: 'Finales: origen o destino de la información. Intermedios: conectan y dirigen el tráfico (switch, router, punto de acceso, cortafuegos). Medios: por donde viaja la señal. Servicios y protocolos: el software que hace útil la red.' },
+    { id: 'hito', ok: resp.hito === String(antes), correcta: tipos.hitos[antes][0], porque: `${tipos.hitos[0][0]}: ${tipos.hitos[0][2]}. ${tipos.hitos[1][0]}: ${tipos.hitos[1][2]}.` },
+    { id: 'copia', ok: Math.abs(decimal(resp.copia) - tipos.copia.segundos) < 0.06, correcta: String(tipos.copia.segundos).replace('.', ',') + ' s', porque: `${tipos.copia.cantidad} ${tipos.copia.unidad} = ${tipos.copia.cantidad} × ${tipos.copia.unidad === 'GB' ? '8000' : '8'} = ${tipos.copia.megabits} Mbit. ${tipos.copia.megabits} ÷ ${tipos.copia.velocidad} = ${String(tipos.copia.segundos).replace('.', ',')} s. Ojo: la velocidad va en bits y el tamaño en bytes (1 B = 8 b).` },
+    { id: 'ipPrivada', ok: resp.ipPrivada === (tipos.ip[1] ? 'privada' : 'publica'), correcta: tipos.ip[1] ? 'Privada' : 'Pública', porque: 'Son privadas las que empiezan por 10, las de 172.16 a 172.31 y las 192.168. El resto son públicas.' },
+
+    { id: 'enlaces', ok: entero(resp.enlaces) === arq.enlaces.n, correcta: String(arq.enlaces.n), porque: arq.enlaces.topologia === 'estrella' ? 'En la estrella hay un enlace por equipo, hasta el dispositivo central.' : 'En el anillo cada equipo se une con el siguiente hasta cerrar el círculo: tantos enlaces como equipos.' },
+    ...arq.fallos.map((f, i) => ({ id: 'fallo' + i, ok: resp['fallo' + i] === f[1], correcta: EFECTOS[f[1]], porque: f[2] })),
+    ...arq.definiciones.map((d, i) => ({ id: 'def' + i, ok: resp['def' + i] === d[1], correcta: d[1], porque: 'El protocolo es horizontal (la misma capa en dos equipos); la interfaz y el servicio son verticales (capas contiguas del mismo equipo).' })),
+    { id: 'wan', ok: resp.wan === arq.wan[1], correcta: arq.wan[1], porque: 'Punto a punto: un enlace entre dos sedes. Concentrador y radios (hub and spoke): una estrella con la sede central en medio. Malla: enlaces entre varias sedes.' },
+
+    { id: 'nDecBin', ok: sinEspacios(resp.nDecBin) === bin8(num.dec), correcta: bin8(num.dec), porque: `Con los pesos 128, 64, 32, 16, 8, 4, 2 y 1: ${[128, 64, 32, 16, 8, 4, 2, 1].filter(w => num.dec & w).join(' + ')} = ${num.dec}.` },
+    { id: 'nBinDec', ok: entero(resp.nBinDec) === num.bin, correcta: String(num.bin), porque: `Se suman los pesos donde hay un 1: ${[128, 64, 32, 16, 8, 4, 2, 1].filter(w => num.bin & w).join(' + ')} = ${num.bin}.` },
+    { id: 'nHexDec', ok: entero(resp.nHexDec) === num.hex, correcta: String(num.hex), porque: `${hex2(num.hex)} = ${num.hex >> 4}·16 + ${num.hex & 15} = ${num.hex}.` },
+    { id: 'nDecHex', ok: soloHex(resp.nDecHex).replace(/^0+(?=.)/, '') === num.aHex.toString(16).toUpperCase(), correcta: hex2(num.aHex), porque: `${num.aHex} : 16 = ${num.aHex >> 4} y resto ${num.aHex & 15}: ${hex2(num.aHex)[0]} y ${hex2(num.aHex)[1]}.` },
+    { id: 'nPrefijo', ok: entero(String(resp.nPrefijo ?? '').replace('/', '')) === num.prefijoDe, correcta: '/' + num.prefijoDe, porque: `En binario es ${enBinario(aOctetos(mascaraDe(num.prefijoDe)))}: tiene ${num.prefijoDe} bits a 1.` },
+    { id: 'nMascara', ok: sinEspacios(resp.nMascara) === mascaraTexto(num.mascaraDe), correcta: mascaraTexto(num.mascaraDe), porque: `${num.mascaraDe} unos seguidos y el resto ceros: ${enBinario(aOctetos(mascaraDe(num.mascaraDe)))}.` },
+    { id: 'nValida', ok: resp.nValida === (num.valida[1] ? 'si' : 'no'), correcta: num.valida[1] ? 'Sí' : 'No', porque: `En binario es ${enBinario(num.valida[0].split('.').map(Number))}. ${num.valida[1] ? 'Los unos van seguidos y a la izquierda.' : 'Los unos no van todos seguidos a la izquierda: hay algún 0 por medio.'}` },
+    { id: 'nRed', ok: sinEspacios(resp.nRed) === puntos(num.red.red), correcta: puntos(num.red.red), porque: `La máscara /${num.red.prefijo} es ${puntos(num.red.mascara)}. Los octetos con 255 se copian y los que tienen 0 quedan a 0. En el octeto ${parcial + 1}: ${bin8(num.red.ip[parcial])} AND ${bin8(num.red.mascara[parcial])} = ${bin8(num.red.red[parcial])} = ${num.red.red[parcial]}.` },
+    { id: 'nMisma', ok: resp.nMisma === (num.otra.misma ? 'si' : 'no'), correcta: num.otra.misma ? 'Sí' : 'No', porque: `Al aplicarle la misma máscara, ${puntos(num.otra.ip)} da ${puntos(aOctetos((deOctetos(num.otra.ip) & deOctetos(num.red.mascara)) >>> 0))}. ${num.otra.misma ? 'Es la misma dirección de red.' : 'No coincide con ' + puntos(num.red.red) + '.'}` },
+    { id: 'nRara', ok: resp.nRara === num.rara[1], correcta: ERRORES_DIR[num.rara[1]], porque: num.rara[2] },
+    { id: 'nOui', ok: soloHex(resp.nOui) === num.mac1.slice(0, 3).map(hex2).join(''), correcta: macTexto(num.mac1.slice(0, 3)), porque: 'El OUI son los 3 primeros octetos (24 bits): identifican al fabricante. Los otros 3 los asigna el fabricante a cada interfaz.' },
+    { id: 'nFab', ok: resp.nFab === (num.mismoFab ? 'si' : 'no'), correcta: num.mismoFab ? 'Sí' : 'No', porque: `Sus OUI son ${macTexto(num.mac1.slice(0, 3))} y ${macTexto(num.mac2.slice(0, 3))}: ${num.mismoFab ? 'coinciden' : 'son distintos'}.` },
+    { id: 'nIG', ok: resp.nIG === (num.ig.grupo ? 'grupo' : 'individual'), correcta: num.ig.grupo ? 'De grupo' : 'Individual', porque: `El primer octeto es ${hex2(num.ig.mac[0])} = ${bin8(num.ig.mac[0])}: su bit de menor peso es ${num.ig.mac[0] & 1}. Con 0 es individual (unicast); con 1, de grupo (multicast o difusión).` },
+    { id: 'nBits', ok: entero(resp.nBits) === num.bits[1], correcta: String(num.bits[1]), porque: 'Un dígito hexadecimal, 4 bits; un octeto, 8; un puerto, 16; una IPv4, 32; una MAC, 48; una IPv6, 128.' },
+    { id: 'nComb', ok: entero(String(resp.nComb ?? '').replace(/\./g, '')) === 2 ** num.comb, correcta: String(2 ** num.comb), porque: `Con n bits hay 2ⁿ combinaciones: 2^${num.comb} = ${2 ** num.comb}.` },
+  ];
   const lista = [
+    ...nuevos,
     ...capas.dispositivos.map((d, i) => ({ id: 'disp' + i, ok: entero(resp['disp' + i]) === d.capa, correcta: `Capa ${d.capa} (${CAPAS[d.capa - 1]})`, porque: d.porque })),
     ...extra.funciones.map((f, i) => ({ id: 'fun' + i, ok: entero(resp['fun' + i]) === f[1], correcta: `Capa ${f[1]} (${CAPAS[f[1] - 1]})`, porque: 'De abajo arriba: física (señal), enlace (tramas, MAC, acceso al medio), red (IP, rutas), transporte (puertos, fiabilidad), sesión (diálogo), presentación (formato, cifrado) y aplicación (protocolos de servicio).' })),
     { id: 'incidencia', ok: entero(resp.incidencia) === extra.incidencia[1], correcta: `Capa ${extra.incidencia[1]} (${CAPAS[extra.incidencia[1] - 1]})`, porque: extra.incidencia[2] },
@@ -192,6 +358,15 @@ export function corregir(caso, resp) {
 
 /** Respuestas correctas de un caso, con el formato que acepta corregir(). */
 export function solucion(caso) {
-  const { red, trama, csma, capas, encap, extra } = caso;
-  return { topoFisica: caso.topo.fisica[1], topoLogica: caso.topo.logica[1], malla: caso.topo.sedes * (caso.topo.sedes - 1) / 2, fun0: extra.funciones[0][1], fun1: extra.funciones[1][1], incidencia: extra.incidencia[1], puerto: extra.servicio[1], transporte: extra.servicio[2], protoCapa: extra.protoCapa[1], cambian: 'mac', enCable: trama.tamano + 8, varVel: extra.variante[1], varMedio: extra.variante[2], ...Object.fromEntries(capas.dispositivos.map((d, i) => ['disp' + i, d.capa])), pdu: capas.pdu.pdu, direccion: capas.direccion.dir, segmento: encap.segmento, paquete: encap.paquete, tramaTam: encap.trama, protoIP: encap.protocolo, tramas: encap.tramas, ttlFinal: encap.ttlFinal, colision: red.colision, difusion: red.difusion, destino: macTexto(trama.destino), origen: macTexto(trama.origen), protocolo: trama.protocolo, esDifusion: trama.esDifusion ? 'si' : 'no', relleno: trama.relleno, tamano: trama.tamano, binario: trama.octeto.toString(2).padStart(8, '0'), tipoDecimal: trama.tipoDecimal, tope: csma.tope, valores: csma.valores, espera: String(csma.espera).replace('.', ','), quien: csma.quien, aplica: csma.enlace.aplica ? 'si' : 'no' };
+  const { red, trama, csma, capas, encap, extra, tipos, arq, num } = caso;
+  const nuevas = {
+    ...Object.fromEntries(tipos.redes.flatMap((x, i) => [[`red${i}alc`, x[1]], [`red${i}tit`, x[2]], [`red${i}med`, x[3]]])),
+    funcional: tipos.funcional[1], conmutacion: tipos.conmutacion[1], tecnologia: tipos.tecnologia[1], elemento: tipos.elemento[1],
+    hito: String(tipos.hitos[0][1] < tipos.hitos[1][1] ? 0 : 1), copia: String(tipos.copia.segundos).replace('.', ','), ipPrivada: tipos.ip[1] ? 'privada' : 'publica',
+    enlaces: arq.enlaces.n, fallo0: arq.fallos[0][1], fallo1: arq.fallos[1][1], def0: arq.definiciones[0][1], def1: arq.definiciones[1][1], wan: arq.wan[1],
+    nDecBin: bin8(num.dec), nBinDec: num.bin, nHexDec: num.hex, nDecHex: hex2(num.aHex), nPrefijo: '/' + num.prefijoDe, nMascara: puntos(aOctetos(mascaraDe(num.mascaraDe))),
+    nValida: num.valida[1] ? 'si' : 'no', nRed: puntos(num.red.red), nMisma: num.otra.misma ? 'si' : 'no', nRara: num.rara[1], nOui: macTexto(num.mac1.slice(0, 3)),
+    nFab: num.mismoFab ? 'si' : 'no', nIG: num.ig.grupo ? 'grupo' : 'individual', nBits: num.bits[1], nComb: 2 ** num.comb,
+  };
+  return { ...nuevas, topoFisica: caso.topo.fisica[1], topoLogica: caso.topo.logica[1], malla: caso.topo.sedes * (caso.topo.sedes - 1) / 2, fun0: extra.funciones[0][1], fun1: extra.funciones[1][1], incidencia: extra.incidencia[1], puerto: extra.servicio[1], transporte: extra.servicio[2], protoCapa: extra.protoCapa[1], cambian: 'mac', enCable: trama.tamano + 8, varVel: extra.variante[1], varMedio: extra.variante[2], ...Object.fromEntries(capas.dispositivos.map((d, i) => ['disp' + i, d.capa])), pdu: capas.pdu.pdu, direccion: capas.direccion.dir, segmento: encap.segmento, paquete: encap.paquete, tramaTam: encap.trama, protoIP: encap.protocolo, tramas: encap.tramas, ttlFinal: encap.ttlFinal, colision: red.colision, difusion: red.difusion, destino: macTexto(trama.destino), origen: macTexto(trama.origen), protocolo: trama.protocolo, esDifusion: trama.esDifusion ? 'si' : 'no', relleno: trama.relleno, tamano: trama.tamano, binario: trama.octeto.toString(2).padStart(8, '0'), tipoDecimal: trama.tipoDecimal, tope: csma.tope, valores: csma.valores, espera: String(csma.espera).replace('.', ','), quien: csma.quien, aplica: csma.enlace.aplica ? 'si' : 'no' };
 }

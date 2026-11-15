@@ -23,5 +23,5 @@ export function vistaInicio() {
     h('h2.tema-tit', h('span.etiqueta', '1.º ASIR · PAR'), ' Tema 1 · Caracterización de redes de datos'),
     h('div.rejilla',
       tarjeta('figuras/csma-cd.html', '1', 'CSMA/CD con un hub', 'Cuatro equipos y un hub: haz que envíen a la vez y sigue la colisión, la señal de atasco y la espera al azar de cada uno.', 'Disponible'),
-      tarjeta('#/analiza', '2', 'Práctica: analiza la red', 'Un caso distinto cada vez: capas y dispositivos, encapsulamiento, dominios de colisión y de difusión, la trama Ethernet y la espera de CSMA/CD. La web te corrige.', 'Sin nota'))) };
+      tarjeta('#/analiza', '2', 'Práctica: analiza la red', 'Ocho bloques con un caso distinto cada vez, para repasar todo el tema: tipos de red, topologías, binario y máscaras, capas, encapsulamiento, dominios, la trama Ethernet y CSMA/CD. La web te corrige.', 'Sin nota'))) };
 }
