@@ -1,0 +1,32 @@
+/* medio.css — «Elige el medio» (Redes locales, Tema 2) */
+.md { max-width: 900px; margin: 0 auto; }
+.md-bloque { padding: 18px 20px; margin: 0 0 18px; }
+.md-bloque h2 { margin: 0 0 8px; font-size: 22px; }
+.md-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 12px 0; }
+.md-caso { display: grid; gap: 8px; padding: 12px 14px; margin: 0 0 12px; border: 2px solid var(--linea); border-radius: 12px; background: var(--papel); }
+.md-caso p { margin: 0; }
+.md-caso select { font: 500 16px var(--f-texto); padding: 9px 10px; border: 2px solid var(--linea); border-radius: 8px; background: var(--superficie); color: var(--tinta); max-width: 100%; }
+.md-caso select:focus { outline: 2px solid var(--azul); outline-offset: 1px; }
+.md-caso.ok { border-color: var(--bien); background: var(--bien-2); }
+.md-caso.ko { border-color: var(--mal); background: var(--mal-2); }
+.md-pista { font-size: 16px; }
+.md-espectro { overflow-x: auto; margin: 10px 0; padding: 8px; border: 1px solid var(--linea); border-radius: 12px; background: var(--superficie); }
+.md-espectro svg { display: block; width: 100%; min-width: 520px; height: auto; font: 700 13px var(--f-mono); }
+.md-espectro text { fill: var(--tinta-2); }
+.md-eje, .md-marca { stroke: var(--tinta); stroke-width: 1.5; fill: none; }
+.md-vecino { fill: var(--tinta-2); fill-opacity: .22; stroke: var(--tinta-2); stroke-width: 1.5; }
+.md-tuyo { fill: var(--azul); fill-opacity: .3; stroke: var(--azul); stroke-width: 2.5; }
+.md-tuyo.md-mal { fill: var(--mal); stroke: var(--mal); }
+text.md-rotulo { stroke: none; fill-opacity: 1; fill: var(--tinta-2); }
+text.md-rotulo.md-tuyo { fill: var(--azul); stroke: none; }
+text.md-rotulo.md-tuyo.md-mal { fill: var(--mal); stroke: none; }
+.md-espectro text.md-tuyo-num { fill: var(--tinta); font-size: 16px; }
+.md-solape { fill: var(--mal); fill-opacity: .16; }
+.md-leyenda { font-weight: 400; }
+.md-control { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-weight: 700; margin: 10px 0; }
+.md-control input { flex: 1 1 240px; accent-color: var(--azul); }
+.md-control output { font: 700 16px var(--f-mono); min-width: 5.5em; }
+.md-estado { padding: 10px 14px; border-radius: 12px; border: 2px solid var(--linea); margin: 8px 0; }
+.md-estado.ok { border-color: var(--bien); background: var(--bien-2); }
+.md-estado.ko { border-color: var(--mal); background: var(--mal-2); }
+.md-enlace { margin: 4px 2px 0; }
