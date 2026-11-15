@@ -80,3 +80,4 @@
 @media (max-width: 620px) {
   .ld-num { font-size: 21px; } .ld-rotulo { font-size: 22px; } .ld-t-titulo { font-size: 17px; } .ld-led-n { font-size: 13px; } .ld-rj-t { font-size: 15px; }
 }
+.lt-enlace { margin: 10px 0 0; }
