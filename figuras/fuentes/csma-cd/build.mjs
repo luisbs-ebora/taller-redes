@@ -175,6 +175,7 @@ const CSS = `
 .cs-screen{fill:#14171c;stroke:#1d1b24;stroke-width:1.5px}
 .cs-text{font-family:var(--anatomy-mono);font-weight:700;fill:#dfe7e1;letter-spacing:.02em}
 .cs-led,.cs-col{fill:#25262e;stroke:#0e0e12;stroke-width:.8px}
+.cs-rotulo{align-self:center;font:700 14px var(--f-mono);color:var(--tinta-2);margin-right:2px}
 .cs-led[data-on]{fill:#ffd23f}
 .cs-col[data-on]{fill:#ff4d3d}
 .cs-rotulo{--anatomy-mid:#e4e6ee}
@@ -203,6 +204,11 @@ for (const path of document.querySelectorAll(".cs-sig")) (csSigs[path.dataset.li
 const csStill = matchMedia("(prefers-reduced-motion: reduce)");
 let csSim = createSim(CS.LENGTHS, CS.SEED);
 let csTour = !csStill.matches, csPhase = 0, csMark = 0, csFrame = 0, csLast = 0, csVisible = false, csIdle = 0, csHits = 0, csWas = false, csPaused = false;
+// Velocidad de la animación: 1 es la normal. Se recuerda en este navegador.
+const CS_RITMOS = [1, 0.4, 0.15];
+let csRitmo = 1;
+try { const v = Number(localStorage.getItem("csma:ritmo")); if (CS_RITMOS.includes(v)) csRitmo = v; } catch (e) {}
+const csRitmoBtns = [...document.querySelectorAll(".cs-controls [data-ritmo]")], csPausaBtn = document.querySelector(".cs-controls [data-pausa]");
 
 // Del tramo de cable [from, to] (unidades del mundo) al trazo en pantalla.
 const csMap = (line, s) => { const w = line.world, c = line.screen; let i = 1; while (i < w.length - 1 && s > w[i]) i++; return c[i - 1] + ((c[i] - c[i - 1]) * (s - w[i - 1])) / (w[i] - w[i - 1]); };
@@ -270,15 +276,26 @@ function csAdvance(dt) {
 function csTick(now) {
   const dt = csLast ? Math.min((now - csLast) / 1000, 1 / 20) : 1 / 60;
   csLast = now;
-  if (!csPaused) for (let i = 0; i < 4; i++) csAdvance(dt / 4);
+  if (!csPaused) for (let i = 0; i < 4; i++) csAdvance((dt * csRitmo) / 4);
   csDraw();
   const busy = csTour || !csSim.quiet();
   csFrame = csVisible && busy && !csPaused ? requestAnimationFrame(csTick) : 0;
 }
 const csRun = () => { if (!csFrame && csVisible) { csLast = 0; csFrame = requestAnimationFrame(csTick); } };
+function csPonRitmo(v) {
+  csRitmo = v;
+  try { localStorage.setItem("csma:ritmo", String(v)); } catch (e) {}
+  for (const b of csRitmoBtns) b.setAttribute("aria-pressed", String(Number(b.dataset.ritmo) === v));
+}
+function csPausa(v) {
+  csPaused = v;
+  csPausaBtn.setAttribute("aria-pressed", String(v));
+  csPausaBtn.textContent = v ? "Seguir" : "Pausa";
+  if (!v) csRun();
+}
 function csSend(indices) {
   if (csTour) { csTour = false; if (!csSim.quiet()) csSim = createSim(CS.LENGTHS, (Math.random() * 1e9) | 0); }
-  csPaused = false;
+  csPausa(false);
   for (const i of indices) csSim.request(i);
   clearTimeout(csIdle);
   if (!csStill.matches) csIdle = setTimeout(function again() { if (csSim.quiet()) { csSim = createSim(CS.LENGTHS, CS.SEED); csPhase = 0; csTour = true; csRun(); } else csIdle = setTimeout(again, 3000); }, 14000);
@@ -287,19 +304,27 @@ function csSend(indices) {
 
 new IntersectionObserver((entries) => { csVisible = entries[entries.length - 1].isIntersecting; if (csVisible) csRun(); }, { rootMargin: "120px 0px" }).observe(csStage);
 csStations.forEach((g, i) => g.addEventListener("click", () => csSend([i])));
-for (const b of document.querySelectorAll(".cs-controls button")) b.addEventListener("click", () => csSend(b.dataset.send.split("").map(Number)));
+for (const b of document.querySelectorAll(".cs-controls [data-send]")) b.addEventListener("click", () => csSend(b.dataset.send.split("").map(Number)));
+for (const b of csRitmoBtns) b.addEventListener("click", () => csPonRitmo(Number(b.dataset.ritmo)));
+csPausaBtn.addEventListener("click", () => csPausa(!csPaused));
 csStage.addEventListener("keydown", (event) => {
   const i = "abcd".indexOf(event.key.toLowerCase());
   if (i >= 0) csSend([i]);
   else if (event.key === " ") { event.preventDefault(); csSend([0, 2]); }
+  else if (event.key.toLowerCase() === "p") csPausa(!csPaused);
+  else if (event.key.toLowerCase() === "v") csPonRitmo(CS_RITMOS[(CS_RITMOS.indexOf(csRitmo) + 1) % CS_RITMOS.length]);
 });
 // Para las comprobaciones: lleva el paseo a un instante concreto y lo deja quieto.
-window.csAt = (seconds) => { csSim = createSim(CS.LENGTHS, CS.SEED); csTour = true; csPhase = 0; csMark = 0; for (let t = 0; t < seconds; t += 1 / 120) csAdvance(1 / 120); csPaused = true; csDraw(); return csReadout.textContent; };
+window.csAt = (seconds) => { csSim = createSim(CS.LENGTHS, CS.SEED); csTour = true; csPhase = 0; csMark = 0; for (let t = 0; t < seconds; t += 1 / 120) csAdvance(1 / 120); csPausa(true); csDraw(); return csReadout.textContent; };
+window.csReloj = () => csSim.t;
+csPonRitmo(csRitmo);
 csDraw();
 `;
 
 const c = (v, d = 1) => v.toFixed(d).replace(".", ",");
-const controls = `<div class="cs-controls fig-controles" role="group" aria-label="Quién envía"><button type="button" data-send="0">Envía A</button><button type="button" data-send="02">A y C a la vez</button><button type="button" data-send="0123">Los cuatro a la vez</button></div>`;
+const controls = `<div class="cs-controls fig-controles"><div class="fig-grupo" role="group" aria-label="Quién envía"><button type="button" data-send="0">Envía A</button><button type="button" data-send="02">A y C a la vez</button><button type="button" data-send="0123">Los cuatro a la vez</button></div>` +
+  `<div class="fig-grupo" role="group" aria-label="Velocidad de la animación"><span class="cs-rotulo">Velocidad</span><button type="button" data-ritmo="1" aria-pressed="true">Normal</button><button type="button" data-ritmo="0.4" aria-pressed="false">Lenta</button><button type="button" data-ritmo="0.15" aria-pressed="false">Muy lenta</button>` +
+  `<button type="button" data-pausa aria-pressed="false">Pausa</button></div></div>`;
 const card = k
   .plateHtml({
     fig: "Fig 2",
@@ -313,8 +338,8 @@ const card = k
     ],
     caption:
       `Cuatro equipos comparten un hub 10BASE-T en semidúplex: forman un único dominio de colisión. Cada cable lleva un par de ida y otro de vuelta. ¶Antes de enviar, el equipo escucha el medio; si está libre, transmite y sigue escuchando, y el hub repite la señal por todos los demás puertos. Si dos transmiten a la vez, las señales chocan en el hub, que propaga la colisión a todos sus puertos. ¶El equipo que oye algo por su par de vuelta mientras transmite ha detectado la colisión: deja de transmitir, envía la señal de atasco (jam) de 32 bits y espera un número al azar de ranuras, entre 0 y 2ⁿ − 1 tras la colisión número n (el exponente deja de crecer a partir de 10). Si los dos eligen lo mismo, vuelven a chocar; a los 16 intentos la trama se descarta. ¶Al acabar la espera vuelve a escuchar y, si el medio está ocupado, aguarda a que quede libre más la pausa entre tramas (96 tiempos de bit). ¶` +
-      `La ranura real dura 512 tiempos de bit, 51,2 µs a 10 Mbit/s, lo mismo que tarda en enviarse la trama mínima de 64 bytes; aquí va a cámara lenta y dura ${c(TIMING.slot)} s, lo que tarda la señal en ir y volver entre los dos equipos más lejanos.`,
-    body: `<div class="iso-stage" tabindex="0" role="group" aria-label="CSMA/CD: pulsa un equipo o las teclas A, B, C y D para que envíe; la barra espaciadora hace que A y C envíen a la vez">${svg}</div>`,
+      `La ranura real dura 512 tiempos de bit, 51,2 µs a 10 Mbit/s, lo mismo que tarda en enviarse la trama mínima de 64 bytes; aquí va a cámara lenta y dura ${c(TIMING.slot)} s, lo que tarda la señal en ir y volver entre los dos equipos más lejanos. Con **Lenta** y **Muy lenta** todo va todavía más despacio, y con **Pausa** se queda quieto para mirarlo.`,
+    body: `<div class="iso-stage" tabindex="0" role="group" aria-label="CSMA/CD: pulsa un equipo o las teclas A, B, C y D para que envíe; la barra espaciadora hace que A y C envíen a la vez; V cambia la velocidad y P pone o quita la pausa">${svg}</div>`,
   })
   .replace("</div><figcaption", `</div>${controls}<figcaption`);
 
