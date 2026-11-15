@@ -1,6 +1,6 @@
 // latiguillo.js — «Haz el latiguillo y pásale el tester» (Redes locales, Tema 2).
 import { h } from '../util.js';
-import { HILOS, TAREAS, juzgar, DIAGNOSTICOS, crearLecturas } from '../practica/Latiguillo.js';
+import { HILOS, TAREAS, TAREA_CONSOLA, juzgar, DIAGNOSTICOS, crearLecturas, CABLES, COMPROBADORES, DIAGNOSTICOS_ASIR, crearAsir } from '../practica/Latiguillo.js';
 
 const semillaNueva = () => 1000 + Math.floor(Math.random() * 9000);
 const hilo = id => h('span.lt-hilo', { 'data-hilo': id, title: HILOS[id] });
@@ -25,8 +25,8 @@ function parteHacer() {
       h('p', 'Hilos sueltos. Tócalos en el orden en que quieres meterlos; toca un pin para sacar su hilo.'),
       h('div.lt-hilos', Object.keys(HILOS).map(id => h('button.lt-suelto', { type: 'button', disabled: usados.includes(id), onclick: () => { const hueco = usados.indexOf(null); if (hueco < 0) return; usados[hueco] = id; if (!usados.includes(null) && activo === 0 && extremos[1].includes(null)) activo = 1; resultado.replaceChildren(); pintar(); } }, hilo(id), HILOS[id]))));
   }
-  function nueva() {
-    tarea = TAREAS[Math.random() < 0.6 ? 0 : 1 + Math.floor(Math.random() * 2)];
+  function nueva(fija) {
+    tarea = fija && fija.id ? fija : TAREAS[Math.random() < 0.6 ? 0 : 1 + Math.floor(Math.random() * 2)];
     extremos = [Array(8).fill(null), Array(8).fill(null)]; activo = 0;
     enunciado.replaceChildren('Haz ', h('strong', tarea.texto), '.');
     resultado.replaceChildren(); pintar();
@@ -38,7 +38,7 @@ function parteHacer() {
   const el = h('section.tarjeta.lt-bloque',
     h('h2', h('span.etiqueta', 'Parte 1'), ' Haz el latiguillo'),
     enunciado, zona,
-    h('div.lt-barra', probar, h('button.btn.sec', { type: 'button', onclick: () => { extremos = [Array(8).fill(null), Array(8).fill(null)]; activo = 0; resultado.replaceChildren(); pintar(); } }, 'Vaciar'), h('button.btn.sec', { type: 'button', onclick: nueva }, 'Otro cable')),
+    h('div.lt-barra', probar, h('button.btn.sec', { type: 'button', onclick: () => { extremos = [Array(8).fill(null), Array(8).fill(null)]; activo = 0; resultado.replaceChildren(); pintar(); } }, 'Vaciar'), h('button.btn.sec', { type: 'button', onclick: () => nueva() }, 'Otro cable'), h('button.btn.sec', { type: 'button', onclick: () => nueva(TAREA_CONSOLA) }, 'Cable de consola (ASIR)')),
     resultado);
   nueva();
   return el;
@@ -74,11 +74,53 @@ function parteTester() {
   return el;
 }
 
+// Nivel de ASIR: qué cable une qué equipos, qué comprobador hace falta y lecturas con cable de consola.
+function parteAsir() {
+  let hechos = 0, aciertos = 0, total = 0;
+  const marcador = h('span.chip'), lista = h('div');
+  const pintarMarcador = () => { marcador.textContent = `${aciertos} de ${hechos} bien`; marcador.className = 'chip' + (hechos === total && aciertos === total ? ' ok' : ''); };
+  const pregunta = (cuerpo, opciones, buena, porque) => {
+    const pista = h('p.lt-pista', { hidden: true });
+    const sel = h('select', h('option', { value: '' }, 'Elige…'), opciones.map(([id, t]) => h('option', { value: id }, t)));
+    const caja = h('div.lt-caso', cuerpo, sel, pista);
+    sel.addEventListener('change', () => {
+      if (!sel.value) return;
+      const ok = sel.value === String(buena);
+      sel.disabled = true; hechos++; if (ok) aciertos++;
+      caja.classList.add(ok ? 'ok' : 'ko'); pista.hidden = false;
+      pista.replaceChildren(h('strong', ok ? 'Bien. ' : 'No: ' + opciones.find(o => String(o[0]) === String(buena))[1] + '. '), porque);
+      pintarMarcador();
+    });
+    total++;
+    return caja;
+  };
+  function nueva() {
+    const a = crearAsir(semillaNueva()); hechos = 0; aciertos = 0; total = 0;
+    lista.replaceChildren(
+      h('p', h('strong', 'Supón equipos antiguos, sin Auto-MDIX. '), '¿Qué cable hace falta para unir…'),
+      ...a.uniones.map(u => pregunta(h('p', '…' + u[0] + '?'), CABLES, u[1], u[2])),
+      h('p', h('strong', '¿Qué comprobador usarías?')),
+      ...a.trabajos.map(t => pregunta(h('p', t[0]), COMPROBADORES.map((c, i) => [i, c]), t[1], t[2])),
+      h('p', h('strong', 'Dos lecturas del comprobador de continuidad.')),
+      ...a.lecturas.map(l => pregunta(tester(l.luces), DIAGNOSTICOS_ASIR, l.tipo, l.causa)),
+      pregunta(h('p', 'Vas a configurar un switch por su puerto de consola. ¿Qué parámetros pones en el programa de terminal?'), [['a', '9600 bit/s, 8 bits de datos, sin paridad, 1 bit de parada (9600 8N1)'], ['b', '115200 bit/s, 7 bits de datos, paridad par, 1 bit de parada'], ['c', '100 Mbit/s en dúplex completo'], ['d', '9600 bit/s, 8 bits de datos, paridad par, 2 bits de parada']], 'a', 'Los parámetros habituales del puerto de consola son 9600 8N1, sin control de flujo.'),
+      pregunta(h('p', 'Un latiguillo pasa la prueba de continuidad, pero el enlace negocia a 100 Mbit/s en vez de a 1 Gbit/s. ¿Qué es lo más probable?'), [['a', 'Un par dividido o un hilo de los pares 4-5 o 7-8 mal conectado'], ['b', 'Que el cable sea cruzado'], ['c', 'Que falte el capuchón del conector'], ['d', 'Que el cable sea demasiado corto']], 'a', '1000BASE-T usa los cuatro pares. Con un par dividido el orden de pines es correcto, pero los hilos son de pares distintos: pasa la continuidad y falla a 1 Gbit/s.'));
+    pintarMarcador();
+  }
+  const el = h('section.tarjeta.lt-bloque',
+    h('h2', h('span.etiqueta', '1.º ASIR · PAR Tema 2'), ' Directo, cruzado y consola'),
+    h('p', 'Para el grupo de ASIR: decide qué cable y qué comprobador hacen falta en cada caso.'),
+    h('div.lt-barra', marcador, h('button.btn.sec', { type: 'button', onclick: nueva }, 'Otras preguntas')),
+    lista);
+  nueva();
+  return el;
+}
+
 export function vistaLatiguillo() {
   return { el: h('section.lt',
     h('div.inicio-cab',
       h('span.etiqueta', 'Tema 2 · Conectores y herramientas'),
       h('h1', 'Haz el latiguillo y pásale el tester'),
       h('p.lead', 'Ordena los ocho hilos en los dos conectores RJ45, crímpalos y mira qué dice el tester. Después, diagnostica los cables de otros. No se guarda nada y no tiene nota.')),
-    parteHacer(), parteTester()) };
+    parteHacer(), parteTester(), parteAsir()) };
 }
