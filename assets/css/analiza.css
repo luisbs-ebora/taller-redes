@@ -1,0 +1,24 @@
+/* analiza.css — «Analiza la red» (PAR, Tema 1) */
+.an { max-width: 980px; margin: 0 auto; }
+.an-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 14px 0; }
+.an-bloque { padding: 18px 20px; margin: 0 0 18px; }
+.an-bloque h2 { margin: 0 0 8px; font-size: 22px; }
+.an-figura { overflow-x: auto; margin: 10px 0 14px; padding: 10px; border: 1px solid var(--linea); border-radius: 12px; background: var(--superficie); }
+.an-red { display: block; width: 100%; height: auto; margin: 0 auto; font: 700 11px var(--f-mono); }
+.an-red text { fill: var(--tinta); }
+.an-lineas path { stroke: var(--tinta-2); stroke-width: 1.4; fill: none; }
+.an-red rect { stroke: var(--tinta); stroke-width: 1.6; fill: var(--papel); }
+.an-red .an-router { fill: var(--ambar-2); }
+.an-red .an-switch { fill: var(--azul-2); }
+.an-red .an-hub { fill: var(--mal-2); }
+.an-volcado { font: 500 15px/1.7 var(--f-mono); padding: 12px 14px; border: 1px solid var(--linea); border-radius: 12px; background: var(--superficie); overflow-x: auto; margin: 10px 0 14px; }
+.an-campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 12px 18px; margin: 8px 0 12px; }
+.an-campo { display: grid; gap: 4px; align-content: start; padding: 10px 12px; border: 2px solid var(--linea); border-radius: 12px; background: var(--papel); }
+.an-campo label { font-weight: 700; }
+.an-campo small { color: var(--tinta-2); }
+.an-campo input, .an-campo select { font: 500 16px var(--f-mono); padding: 8px 10px; border: 2px solid var(--linea); border-radius: 8px; background: var(--superficie); color: var(--tinta); max-width: 100%; }
+.an-campo input:focus, .an-campo select:focus { outline: 2px solid var(--azul); outline-offset: 1px; }
+.an-campo.ok { border-color: var(--bien); background: var(--bien-2); }
+.an-campo.ko { border-color: var(--mal); background: var(--mal-2); }
+.an-pista { margin: 4px 0 0; font-size: 15px; }
+.an-enlace { margin: 6px 0 0; }

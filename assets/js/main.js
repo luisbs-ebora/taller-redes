@@ -4,6 +4,7 @@ import { vistaInicio } from './vistas/inicio.js';
 import { vistaAnimado } from './vistas/animado.js';
 import { vistaDisenio } from './vistas/disenio.js';
 import { vistaMapas } from './vistas/mapas.js';
+import { vistaAnaliza } from './vistas/analiza.js';
 import { ESCENA_RED, ESCENA_RACK } from './animado/escenas.js';
 
 const main = document.getElementById('contenido');
@@ -23,6 +24,7 @@ const RUTAS = [
   [/^animado$/, () => vistaAnimado(ESCENA_RED)],
   [/^rack$/, () => vistaAnimado(ESCENA_RACK)],
   [/^mapas$/, () => vistaMapas()],
+  [/^analiza(\?.*)?$/, () => vistaAnaliza()],
   [/^(practica|examen)$/, m => vistaDisenio(m[1])],
 ];
 

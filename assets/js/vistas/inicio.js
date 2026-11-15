@@ -20,5 +20,6 @@ export function vistaInicio() {
       tarjeta('figuras/fibra-optica.html', '2', 'Fibra óptica por dentro', 'Una fibra cortada a lo largo: gira el láser, mira cómo rebota la luz en el núcleo, cuándo se escapa y por qué el monomodo llega más lejos.', 'Disponible')),
     h('h2.tema-tit', h('span.etiqueta', '1.º ASIR · PAR'), ' Tema 1 · Caracterización de redes de datos'),
     h('div.rejilla',
-      tarjeta('figuras/csma-cd.html', '1', 'CSMA/CD con un hub', 'Cuatro equipos y un hub: haz que envíen a la vez y sigue la colisión, la señal de atasco y la espera al azar de cada uno.', 'Disponible'))) };
+      tarjeta('figuras/csma-cd.html', '1', 'CSMA/CD con un hub', 'Cuatro equipos y un hub: haz que envíen a la vez y sigue la colisión, la señal de atasco y la espera al azar de cada uno.', 'Disponible'),
+      tarjeta('#/analiza', '2', 'Práctica: analiza la red', 'Un caso distinto cada vez: cuenta dominios de colisión y de difusión, lee una trama Ethernet y calcula la espera de CSMA/CD. La web te corrige.', 'Sin nota'))) };
 }
