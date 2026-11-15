@@ -70,6 +70,20 @@ const VARIANTES = [
   ['1000BASE-SX', '1 Gbit/s', 'Fibra multimodo'], ['10GBASE-SR', '10 Gbit/s', 'Fibra multimodo'], ['10GBASE-LR', '10 Gbit/s', 'Fibra monomodo'], ['10BASE2', '10 Mbit/s', 'Coaxial'], ['100BASE-FX', '100 Mbit/s', 'Fibra multimodo'],
 ];
 
+const TOPOLOGIAS = [
+  ['Cada equipo tiene su propio cable hasta un único switch.', 'Estrella'],
+  ['Hay un switch por planta y todos se unen a un switch central.', 'Estrella extendida'],
+  ['Todos los equipos comparten un cable coaxial con un terminador en cada punta.', 'Bus'],
+  ['Cada nodo se une con el siguiente hasta cerrar un círculo; en la red del operador es doble y de fibra.', 'Anillo'],
+  ['Cada sede tiene enlaces con varias otras, de modo que hay caminos alternativos.', 'Malla'],
+];
+const LOGICAS = [
+  ['unos equipos conectados a un hub', 'Difusión', 'El hub repite cada señal por todos sus puertos: físicamente es una estrella, pero lógicamente se comporta como un bus.'],
+  ['unos equipos conectados a un switch', 'Conmutación punto a punto', 'El switch envía cada trama solo por el puerto del destino.'],
+  ['una red Wi‑Fi', 'Difusión', 'Todos comparten el mismo canal: lo que transmite uno lo reciben todos.'],
+  ['una red Token Ring', 'Paso de testigo', 'Solo transmite quien tiene el testigo, aunque físicamente fuera una estrella.'],
+];
+
 export function crearCaso(semilla) {
   const r = azar(semilla);
   // Bloque 1 · La red: un router y, en cada interfaz, un switch (a veces con un hub colgando) o un hub.
@@ -109,8 +123,11 @@ export function crearCaso(semilla) {
   const f1 = r.de(FUNCIONES), f2 = r.de(FUNCIONES.filter(f => f[1] !== f1[1]));
   const incidencia = r.de(INCIDENCIAS), servicio = r.de(SERVICIOS), protoCapa = r.de(PROTOCOLOS_CAPA), variante = r.de(VARIANTES);
 
+  const topo = { fisica: r.de(TOPOLOGIAS), logica: r.de(LOGICAS), sedes: r.n(4, 9) };   // sección 2, también al final
+
   return {
     semilla,
+    topo,
     extra: { funciones: [f1, f2], incidencia, servicio, protoCapa, variante },
     capas: { dispositivos, pdu, direccion },
     encap: { tcp, app, cab, segmento: app + cab, paquete: app + cab + 20, trama: app + cab + 20 + 18, protocolo: tcp ? 6 : 17, routers, ttl, tramas: routers + 1, ttlFinal: ttl - routers },
@@ -127,7 +144,7 @@ const es = (n, sing, plur) => `${n} ${n === 1 ? sing : plur}`;
 
 /** Devuelve la lista de apartados con { id, ok, correcta, porque } y los aciertos. */
 export function corregir(caso, resp) {
-  const { red, trama, csma, capas, encap, extra } = caso;
+  const { red, trama, csma, capas, encap, extra, topo } = caso;
   const partes = red.interfaces.map((i, k) => i.tipo === 'hub'
     ? `interfaz ${k + 1}: 1 (el hub y todo lo que cuelga de él)`
     : `interfaz ${k + 1}: ${i.pcs + (i.hub ? 1 : 0) + 1} (${es(i.pcs, 'puerto con PC', 'puertos con PC')}${i.hub ? ', 1 puerto con el hub' : ''} y 1 puerto hacia el router)`);
@@ -148,6 +165,9 @@ export function corregir(caso, resp) {
     { id: 'cambian', ok: resp.cambian === 'mac', correcta: 'Las direcciones MAC', porque: 'Las MAC solo tienen sentido dentro de cada red local y cambian en cada salto; las IP de origen y destino se mantienen de extremo a extremo.' },
     { id: 'tramas', ok: entero(resp.tramas) === encap.tramas, correcta: String(encap.tramas), porque: `Cada router desencapsula hasta IP y crea una trama nueva para el siguiente enlace: ${encap.routers} ${encap.routers === 1 ? 'router' : 'routers'} son ${encap.tramas} enlaces y ${encap.tramas} tramas. Las MAC cambian en cada salto; las IP no.` },
     { id: 'ttlFinal', ok: entero(resp.ttlFinal) === encap.ttlFinal, correcta: String(encap.ttlFinal), porque: `Cada router resta 1 al TTL: ${encap.ttl} − ${encap.routers} = ${encap.ttlFinal}.` },
+    { id: 'topoFisica', ok: resp.topoFisica === topo.fisica[1], correcta: topo.fisica[1], porque: 'Bus: un cable compartido. Anillo: un círculo cerrado. Estrella: todos a un dispositivo central. Estrella extendida: varias estrellas unidas por un switch superior. Malla: enlaces redundantes entre nodos.' },
+    { id: 'topoLogica', ok: resp.topoLogica === topo.logica[1], correcta: topo.logica[1], porque: topo.logica[2] },
+    { id: 'malla', ok: entero(resp.malla) === topo.sedes * (topo.sedes - 1) / 2, correcta: String(topo.sedes * (topo.sedes - 1) / 2), porque: `En una malla completa hacen falta n·(n − 1)/2 enlaces: ${topo.sedes}·${topo.sedes - 1}/2 = ${topo.sedes * (topo.sedes - 1) / 2}.` },
     { id: 'colision', ok: entero(resp.colision) === red.colision, correcta: String(red.colision), porque: `Cada puerto usado de un switch es un dominio de colisión; un hub es uno solo para todos sus puertos. ${partes.join('; ')}.` },
     { id: 'difusion', ok: entero(resp.difusion) === red.difusion, correcta: String(red.difusion), porque: 'Ni el hub ni el switch separan la difusión; el router sí: hay un dominio de difusión por cada interfaz del router.' },
     { id: 'destino', ok: soloHex(resp.destino) === trama.destino.map(hex2).join(''), correcta: macTexto(trama.destino), porque: 'La MAC de destino son los 6 primeros bytes de la trama.' },
@@ -173,5 +193,5 @@ export function corregir(caso, resp) {
 /** Respuestas correctas de un caso, con el formato que acepta corregir(). */
 export function solucion(caso) {
   const { red, trama, csma, capas, encap, extra } = caso;
-  return { fun0: extra.funciones[0][1], fun1: extra.funciones[1][1], incidencia: extra.incidencia[1], puerto: extra.servicio[1], transporte: extra.servicio[2], protoCapa: extra.protoCapa[1], cambian: 'mac', enCable: trama.tamano + 8, varVel: extra.variante[1], varMedio: extra.variante[2], ...Object.fromEntries(capas.dispositivos.map((d, i) => ['disp' + i, d.capa])), pdu: capas.pdu.pdu, direccion: capas.direccion.dir, segmento: encap.segmento, paquete: encap.paquete, tramaTam: encap.trama, protoIP: encap.protocolo, tramas: encap.tramas, ttlFinal: encap.ttlFinal, colision: red.colision, difusion: red.difusion, destino: macTexto(trama.destino), origen: macTexto(trama.origen), protocolo: trama.protocolo, esDifusion: trama.esDifusion ? 'si' : 'no', relleno: trama.relleno, tamano: trama.tamano, binario: trama.octeto.toString(2).padStart(8, '0'), tipoDecimal: trama.tipoDecimal, tope: csma.tope, valores: csma.valores, espera: String(csma.espera).replace('.', ','), quien: csma.quien, aplica: csma.enlace.aplica ? 'si' : 'no' };
+  return { topoFisica: caso.topo.fisica[1], topoLogica: caso.topo.logica[1], malla: caso.topo.sedes * (caso.topo.sedes - 1) / 2, fun0: extra.funciones[0][1], fun1: extra.funciones[1][1], incidencia: extra.incidencia[1], puerto: extra.servicio[1], transporte: extra.servicio[2], protoCapa: extra.protoCapa[1], cambian: 'mac', enCable: trama.tamano + 8, varVel: extra.variante[1], varMedio: extra.variante[2], ...Object.fromEntries(capas.dispositivos.map((d, i) => ['disp' + i, d.capa])), pdu: capas.pdu.pdu, direccion: capas.direccion.dir, segmento: encap.segmento, paquete: encap.paquete, tramaTam: encap.trama, protoIP: encap.protocolo, tramas: encap.tramas, ttlFinal: encap.ttlFinal, colision: red.colision, difusion: red.difusion, destino: macTexto(trama.destino), origen: macTexto(trama.origen), protocolo: trama.protocolo, esDifusion: trama.esDifusion ? 'si' : 'no', relleno: trama.relleno, tamano: trama.tamano, binario: trama.octeto.toString(2).padStart(8, '0'), tipoDecimal: trama.tipoDecimal, tope: csma.tope, valores: csma.valores, espera: String(csma.espera).replace('.', ','), quien: csma.quien, aplica: csma.enlace.aplica ? 'si' : 'no' };
 }

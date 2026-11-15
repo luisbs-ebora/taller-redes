@@ -53,7 +53,7 @@ export function vistaAnaliza() {
   function pintar() {
     campos = {}; corregido = false;
     marcador.textContent = 'Sin corregir'; marcador.className = 'chip';
-    const { red, trama, csma, capas, encap, extra } = caso;
+    const { red, trama, csma, capas, encap, extra, topo } = caso;
     const capaOSI = id => lista(id, NOMBRES_CAPA.map((n, i) => [String(i + 1), `${i + 1} · ${n}`]));
     const pduNombre = encap.tcp ? 'segmento TCP' : 'datagrama UDP';
     cuerpo.replaceChildren(
@@ -86,7 +86,11 @@ export function vistaAnaliza() {
           campo('ttlFinal', '¿Con qué TTL llega al destino?', numero('ttlFinal')),
           campo('cambian', '¿Qué direcciones cambian en cada salto?', lista('cambian', [['mac', 'Las direcciones MAC'], ['ip', 'Las direcciones IP'], ['dos', 'Las MAC y las IP'], ['ninguna', 'Ninguna']])))),
       h('section.tarjeta.an-bloque',
-        h('h2', h('span.etiqueta', 'Bloque 3'), ' Dominios de colisión y de difusión'),
+        h('h2', h('span.etiqueta', 'Bloque 3'), ' Topologías y dominios'),
+        h('div.an-campos',
+          campo('topoFisica', 'Topología física: ' + topo.fisica[0], lista('topoFisica', ['Bus', 'Anillo', 'Estrella', 'Estrella extendida', 'Malla'].map(x => [x, x]))),
+          campo('topoLogica', `Topología lógica de ${topo.logica[0]}`, lista('topoLogica', ['Difusión', 'Paso de testigo', 'Conmutación punto a punto'].map(x => [x, x]))),
+          campo('malla', `Enlaces de una malla completa entre ${topo.sedes} sedes`, numero('malla'))),
         h('p', 'Esta es la red de una empresa. Cada cuadrado pequeño es un equipo.'),
         h('div.an-figura', { html: dibujoRed(red) }),
         h('div.an-campos',

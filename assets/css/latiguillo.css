@@ -1,0 +1,43 @@
+/* latiguillo.css — «Haz el latiguillo y pásale el tester» (Redes locales, Tema 2) */
+.lt { max-width: 900px; margin: 0 auto; }
+.lt-bloque { padding: 18px 20px; margin: 0 0 18px; }
+.lt-bloque h2 { margin: 0 0 8px; font-size: 22px; }
+.lt-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 12px 0; }
+.lt-tarea { font-size: 19px; }
+.lt-extremos { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin: 10px 0; }
+.lt-extremo { padding: 12px; border: 2px solid var(--linea); border-radius: 12px; background: var(--papel); cursor: pointer; }
+.lt-extremo.activo { border-color: var(--azul); }
+.lt-extremo p { margin: 0 0 8px; }
+.lt-extremo small { color: var(--tinta-2); }
+.lt-conector { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; padding: 8px 8px 4px; border: 2px solid var(--tinta); border-radius: 8px 8px 3px 3px; background: var(--superficie); margin-bottom: 6px; }
+.lt-pin { all: unset; cursor: pointer; display: grid; justify-items: center; gap: 3px; }
+.lt-pin:focus-visible { outline: 2px solid var(--azul); outline-offset: 2px; border-radius: 4px; }
+.lt-pin .lt-hilo, .lt-vacio { display: block; width: 100%; height: 54px; box-sizing: border-box; border-radius: 4px; }
+.lt-vacio { border: 2px dashed var(--linea); }
+.lt-num { font: 700 13px var(--f-mono); color: var(--tinta-2); }
+.lt-hilo { display: block; width: 22px; height: 22px; border-radius: 4px; border: 2px solid var(--tinta); box-sizing: border-box; background: var(--c); }
+.lt-hilo[data-hilo="n"] { --c: #e8811a; } .lt-hilo[data-hilo="v"] { --c: #2e9e4f; } .lt-hilo[data-hilo="a"] { --c: #2a62c9; } .lt-hilo[data-hilo="m"] { --c: #7a4a22; }
+.lt-hilo[data-hilo="bn"] { background: repeating-linear-gradient(135deg, #fff 0 5px, #e8811a 5px 10px); }
+.lt-hilo[data-hilo="bv"] { background: repeating-linear-gradient(135deg, #fff 0 5px, #2e9e4f 5px 10px); }
+.lt-hilo[data-hilo="ba"] { background: repeating-linear-gradient(135deg, #fff 0 5px, #2a62c9 5px 10px); }
+.lt-hilo[data-hilo="bm"] { background: repeating-linear-gradient(135deg, #fff 0 5px, #7a4a22 5px 10px); }
+.lt-hilos { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+.lt-suelto { all: unset; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 2px solid var(--linea); border-radius: 10px; background: var(--superficie); font-weight: 700; }
+.lt-suelto:hover:not([disabled]) { border-color: var(--azul); }
+.lt-suelto:focus-visible { outline: 2px solid var(--azul); outline-offset: 1px; }
+.lt-suelto[disabled] { opacity: .35; cursor: default; }
+.lt-tester { display: inline-grid; gap: 4px; padding: 12px 14px; border: 2px solid var(--tinta); border-radius: 12px; background: var(--superficie); margin: 8px 0; max-width: 100%; overflow-x: auto; }
+.lt-fila { display: flex; align-items: center; gap: 5px; }
+.lt-cable { width: 26px; height: 2px; background: var(--tinta-2); margin: 0 4px; }
+.lt-led { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font: 700 12px var(--f-mono); border: 2px solid var(--linea); color: var(--tinta-2); flex: none; }
+.lt-led.on { background: var(--bien); border-color: var(--bien); color: #fff; }
+.lt-fila.mal .lt-led.on { background: var(--mal); border-color: var(--mal); }
+.lt-veredicto, .lt-pista { padding: 10px 14px; border-radius: 12px; border: 2px solid var(--linea); margin: 8px 0; }
+.lt-veredicto.ok { border-color: var(--bien); background: var(--bien-2); }
+.lt-veredicto.ko { border-color: var(--mal); background: var(--mal-2); }
+.lt-caso { display: grid; gap: 6px; justify-items: start; padding: 12px 14px; margin: 0 0 12px; border: 2px solid var(--linea); border-radius: 12px; background: var(--papel); }
+.lt-caso p { margin: 0; }
+.lt-caso select { font: 500 16px var(--f-texto); padding: 9px 10px; border: 2px solid var(--linea); border-radius: 8px; background: var(--superficie); color: var(--tinta); max-width: 100%; }
+.lt-caso.ok { border-color: var(--bien); background: var(--bien-2); }
+.lt-caso.ko { border-color: var(--mal); background: var(--mal-2); }
+.lt-caso .lt-pista { border: 0; padding: 0; margin: 0; }
