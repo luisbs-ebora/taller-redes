@@ -168,6 +168,19 @@ const CSS = `
 .rj-chispa{fill:none;stroke:#3fbf6a;stroke-width:2.4px;stroke-linecap:round}
 .rj-aviso{fill:none;stroke:#e5484d;stroke-width:2.4px;stroke-linecap:round;stroke-dasharray:1 5}
 .iso-stage{outline:none;touch-action:manipulation}
+.fig .ch{margin:22px 0 0;padding:18px 20px 20px;background:var(--d-papel);border:var(--d-borde);border-radius:18px;box-shadow:var(--d-sombra)}
+.ch h2{font-size:24px;margin:0 0 6px}
+.ch p{margin:0 0 12px}
+.ch-normas{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px 28px}
+.ch-norma h3{font:800 20px/1.2 var(--f-titulo);margin:0 0 8px}
+.ch-norma h3 small{font:500 13px var(--f-mono);color:var(--tinta-2);margin-left:6px}
+.ch-hilos{list-style:none;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:5px;margin:0;padding:10px 10px 8px;border:2.5px solid var(--d-tinta);border-radius:12px 12px 4px 4px;background:#fff}
+.ch-hilos li{display:grid;justify-items:center;gap:5px;min-width:0}
+.ch-pin{font:700 15px var(--f-mono);color:var(--d-tinta)}
+.ch-hilo{display:block;width:100%;max-width:30px;height:64px;border:2px solid var(--d-tinta);border-radius:5px}
+.ch-nombre{font:700 11.5px/1.15 var(--f-texto);text-align:center;color:var(--tinta);overflow-wrap:anywhere}
+.ch-notas{margin:14px 0 0;padding-left:20px;display:grid;gap:6px;font-size:17px}
+@media (max-width:560px){.ch-nombre{font-size:9.5px}.ch-hilo{height:52px}.ch-hilos{padding:8px 5px 6px;gap:3px}}
 `;
 
 const MODEL = readFileSync(join(HERE, "model.mjs"), "utf8").replace(/^export /gm, "");
@@ -277,6 +290,25 @@ const card = k
   })
   .replace("</div><figcaption", `</div>${controls}<figcaption`);
 
+// ---------- Chuleta: el orden de colores de las dos normas (sección 4 del Tema 2, apartado 1.1) ----------
+const COLORES = { n: ["Naranja", "#e8811a"], v: ["Verde", "#2e9e4f"], a: ["Azul", "#2a62c9"], m: ["Marrón", "#7a4a22"] };
+const NORMAS = { T568B: ["bn", "n", "bv", "a", "ba", "v", "bm", "m"], T568A: ["bv", "v", "bn", "a", "ba", "n", "bm", "m"] };
+const hilo = (id, pin) => {
+  const [nombre, color] = COLORES[id.slice(-1)], rayado = id.length === 2;
+  return `<li><span class="ch-pin">${pin}</span><i class="ch-hilo" style="${rayado ? `background:repeating-linear-gradient(180deg,#fff 0 7px,${color} 7px 14px)` : `background:${color}`}"></i><span class="ch-nombre">${rayado ? "Blanco-" + nombre.toLowerCase() : nombre}</span></li>`;
+};
+const norma = (nombre, nota) => `<div class="ch-norma"><h3>${nombre} <small>${nota}</small></h3><ol class="ch-hilos" aria-label="Orden de colores de la norma ${nombre}, del pin 1 al 8">${NORMAS[nombre].map((id, i) => hilo(id, i + 1)).join("")}</ol></div>`;
+const chuleta = `<section class="tarjeta ch" aria-labelledby="ch-titulo">
+  <h2 id="ch-titulo"><span class="etiqueta">Chuleta</span> El orden de los colores</h2>
+  <p>Con la <strong>pestaña hacia abajo</strong> y la abertura del cable <strong>mirando hacia ti</strong>, el pin 1 es el de la izquierda.</p>
+  <div class="ch-normas">${norma("T568B", "la más habitual")}${norma("T568A", "")}</div>
+  <ul class="ch-notas">
+    <li><strong>Truco para la T568B:</strong> blanco-naranja, naranja, blanco-verde, azul, blanco-azul, verde, blanco-marrón, marrón. El par azul va en el centro (pines 4 y 5) y el verde «abraza» al azul (pines 3 y 6).</li>
+    <li>Entre la A y la B solo <strong>se intercambian el par naranja y el verde</strong>. El azul y el marrón no se mueven.</li>
+    <li><strong>Cable directo:</strong> la misma norma en los dos extremos. <strong>Cable cruzado:</strong> la A en un extremo y la B en el otro.</li>
+  </ul>
+</section>`;
+
 const out = join(HERE, "../../rj45.html");
 writeFileSync(out, paginaTaller({
   isoCss: k.ISO_CSS,
@@ -286,6 +318,7 @@ writeFileSync(out, paginaTaller({
   lead: "Qué hace la crimpadora dentro del conector, y por qué un hilo que no llega al fondo deja una luz del tester apagada.",
   css: CSS,
   card,
+  extra: chuleta,
   script: kitScript() + live,
 }));
 console.log("wrote", out);
