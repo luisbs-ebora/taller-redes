@@ -53,7 +53,7 @@ export function vistaAnaliza() {
   function pintar() {
     campos = {}; corregido = false;
     marcador.textContent = 'Sin corregir'; marcador.className = 'chip';
-    const { red, trama, csma, capas, encap } = caso;
+    const { red, trama, csma, capas, encap, extra } = caso;
     const capaOSI = id => lista(id, NOMBRES_CAPA.map((n, i) => [String(i + 1), `${i + 1} · ${n}`]));
     const pduNombre = encap.tcp ? 'segmento TCP' : 'datagrama UDP';
     cuerpo.replaceChildren(
@@ -61,6 +61,10 @@ export function vistaAnaliza() {
         h('h2', h('span.etiqueta', 'Bloque 1'), ' Dispositivos, capas y direcciones'),
         h('p', 'Indica la capa más alta del modelo OSI que procesa cada dispositivo para decidir qué hace con los datos.'),
         h('div.an-campos', capas.dispositivos.map((d, i) => campo('disp' + i, d.nombre, capaOSI('disp' + i)))),
+        h('p', 'Ahora al revés: ¿qué capa OSI se encarga de cada función? ¿Y en qué capa buscarías primero esta avería?'),
+        h('div.an-campos',
+          extra.funciones.map((f, i) => campo('fun' + i, f[0], capaOSI('fun' + i))),
+          campo('incidencia', 'Avería: ' + extra.incidencia[0], capaOSI('incidencia'))),
         h('div.an-campos',
           campo('pdu', `¿Cómo se llama la PDU de la capa ${capas.pdu.capa}?`, lista('pdu', ['Bit', 'Trama', 'Paquete', 'Segmento', 'Datos'].map(x => [x, x]))),
           campo('direccion', `¿Qué dirección se usa en la capa de ${capas.direccion.capa} de TCP/IP?`, lista('direccion', ['Nombre de dominio', 'Puerto', 'Dirección IP', 'Dirección MAC'].map(x => [x, x]))))),
@@ -72,10 +76,15 @@ export function vistaAnaliza() {
           campo('paquete', 'Tamaño del paquete IPv4, en bytes', numero('paquete')),
           campo('tramaTam', 'Tamaño de la trama Ethernet, en bytes', numero('tramaTam'), 'Con la FCS y sin el preámbulo'),
           campo('protoIP', 'Valor del campo Protocolo de la cabecera IPv4', numero('protoIP'))),
+        h('div.an-campos',
+          campo('puerto', `Puerto del servidor de ${extra.servicio[0]}`, numero('puerto')),
+          campo('transporte', `${extra.servicio[0]} viaja normalmente sobre…`, lista('transporte', [['TCP', 'TCP'], ['UDP', 'UDP']])),
+          campo('protoCapa', `Capa de TCP/IP a la que pertenece ${extra.protoCapa[0]}`, lista('protoCapa', ['Acceso a la red', 'Internet', 'Transporte', 'Aplicación'].map(x => [x, x])))),
         h('p', 'El paquete sale con TTL = ', h('strong', String(encap.ttl)), ' y atraviesa ', h('strong', String(encap.routers)), encap.routers === 1 ? ' router' : ' routers', ' hasta llegar al equipo de destino.'),
         h('div.an-campos',
           campo('tramas', '¿Cuántas tramas distintas se crean en todo el camino?', numero('tramas')),
-          campo('ttlFinal', '¿Con qué TTL llega al destino?', numero('ttlFinal')))),
+          campo('ttlFinal', '¿Con qué TTL llega al destino?', numero('ttlFinal')),
+          campo('cambian', '¿Qué direcciones cambian en cada salto?', lista('cambian', [['mac', 'Las direcciones MAC'], ['ip', 'Las direcciones IP'], ['dos', 'Las MAC y las IP'], ['ninguna', 'Ninguna']])))),
       h('section.tarjeta.an-bloque',
         h('h2', h('span.etiqueta', 'Bloque 3'), ' Dominios de colisión y de difusión'),
         h('p', 'Esta es la red de una empresa. Cada cuadrado pequeño es un equipo.'),
@@ -84,7 +93,11 @@ export function vistaAnaliza() {
           campo('colision', '¿Cuántos dominios de colisión hay?', numero('colision')),
           campo('difusion', '¿Cuántos dominios de difusión hay?', numero('difusion')))),
       h('section.tarjeta.an-bloque',
-        h('h2', h('span.etiqueta', 'Bloque 4'), ' La trama Ethernet II'),
+        h('h2', h('span.etiqueta', 'Bloque 4'), ' Ethernet: variantes y trama'),
+        h('p', 'Antes, una variante: ', h('strong', extra.variante[0]), '.'),
+        h('div.an-campos',
+          campo('varVel', '¿A qué velocidad trabaja?', lista('varVel', ['10 Mbit/s', '100 Mbit/s', '1 Gbit/s', '10 Gbit/s'].map(x => [x, x]))),
+          campo('varMedio', '¿Qué medio usa?', lista('varMedio', ['Par trenzado', 'Fibra multimodo', 'Fibra monomodo', 'Coaxial'].map(x => [x, x])))),
         h('p', 'Has capturado esta trama. La captura no incluye el preámbulo, el SFD ni la FCS, y solo se ve el principio. La capa superior ha entregado ', h('strong', trama.datos + ' bytes'), ' de datos.'),
         h('pre.an-volcado', volcadoTexto(trama.volcado)),
         h('div.an-campos',
@@ -94,6 +107,7 @@ export function vistaAnaliza() {
           campo('esDifusion', '¿Es una trama de difusión?', siNo('esDifusion')),
           campo('relleno', 'Bytes de relleno que se añaden', numero('relleno'), 'Si no hace falta, escribe 0'),
           campo('tamano', 'Tamaño total de la trama, en bytes', numero('tamano'), 'Con la FCS y sin el preámbulo'),
+          campo('enCable', 'Bytes que ocupa en el cable', numero('enCable'), 'Con la FCS, el preámbulo y el SFD'),
           campo('binario', `El último byte de la MAC de origen (${hex2(trama.octeto)}) en binario`, texto('binario', 12, { inputmode: 'numeric' }), '8 bits'),
           campo('tipoDecimal', `El campo Tipo (0x${trama.tipo}) en decimal`, numero('tipoDecimal')))),
       h('section.tarjeta.an-bloque',

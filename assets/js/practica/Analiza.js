@@ -49,6 +49,27 @@ const DIRECCIONES = [
   { capa: 'acceso a la red', dir: 'Dirección MAC', porque: 'La dirección MAC identifica a la interfaz dentro de la red local.' },
 ];
 
+const FUNCIONES = [
+  ['Direccionamiento lógico y encaminamiento entre redes', 3], ['Codificación de caracteres, como ASCII o UTF-8', 6], ['Establecer, mantener y cerrar el diálogo entre las aplicaciones', 5],
+  ['Organizar los bits en tramas', 2], ['Definir los conectores, el tipo de cable y la forma de la señal', 1], ['Identificar cada aplicación con un número de puerto', 4],
+  ['Ofrecer a los programas protocolos como HTTP o DNS', 7], ['Detectar errores con el código FCS', 2], ['Decidir quién transmite cuando el medio es compartido', 2],
+  ['Comprimir y cifrar los datos', 6], ['Poner puntos de sincronización para retomar una transferencia', 5], ['Entregar los datos en orden y sin pérdidas de extremo a extremo', 4],
+];
+const INCIDENCIAS = [
+  ['El LED de enlace de la tarjeta de red está apagado.', 1, 'Sin enlace no hay señal: es un problema físico (cable, conector o puerto).'],
+  ['El equipo tiene enlace, pero su dirección IPv4 es 169.254.30.8 y no sale de su red.', 3, 'No tiene una IP, máscara y puerta de enlace correctas: capa de red.'],
+  ['Se puede navegar escribiendo direcciones IP, pero no escribiendo nombres.', 7, 'Falla la resolución de nombres (DNS), que es un servicio de la capa de aplicación.'],
+  ['El servidor responde al ping, pero el programa no conecta: el cortafuegos tiene cerrado su puerto.', 4, 'Los puertos son de la capa de transporte.'],
+  ['El cable está bien y hay enlace, pero el adaptador de red está deshabilitado y su MAC no aparece en el switch.', 2, 'El enlace físico está bien; lo que falla es el nivel de enlace (la interfaz y su MAC).'],
+  ['Desde que alguien pisó el cable, llegan muchas tramas dañadas.', 1, 'El origen es el cable, capa física, aunque el error se detecte en la capa 2 con la FCS.'],
+];
+const SERVICIOS = [['HTTP', 80, 'TCP'], ['HTTPS', 443, 'TCP'], ['DNS', 53, 'UDP'], ['SMTP', 25, 'TCP'], ['SSH', 22, 'TCP'], ['Telnet', 23, 'TCP'], ['IMAP', 143, 'TCP'], ['POP3', 110, 'TCP'], ['SNMP', 161, 'UDP']];
+const PROTOCOLOS_CAPA = [['IPv4', 'Internet'], ['ICMP', 'Internet'], ['Ethernet', 'Acceso a la red'], ['Wi‑Fi', 'Acceso a la red'], ['TCP', 'Transporte'], ['UDP', 'Transporte'], ['HTTP', 'Aplicación'], ['DNS', 'Aplicación'], ['DHCP', 'Aplicación']];
+const VARIANTES = [
+  ['10BASE-T', '10 Mbit/s', 'Par trenzado'], ['100BASE-TX', '100 Mbit/s', 'Par trenzado'], ['1000BASE-T', '1 Gbit/s', 'Par trenzado'], ['10GBASE-T', '10 Gbit/s', 'Par trenzado'],
+  ['1000BASE-SX', '1 Gbit/s', 'Fibra multimodo'], ['10GBASE-SR', '10 Gbit/s', 'Fibra multimodo'], ['10GBASE-LR', '10 Gbit/s', 'Fibra monomodo'], ['10BASE2', '10 Mbit/s', 'Coaxial'], ['100BASE-FX', '100 Mbit/s', 'Fibra multimodo'],
+];
+
 export function crearCaso(semilla) {
   const r = azar(semilla);
   // Bloque 1 · La red: un router y, en cada interfaz, un switch (a veces con un hub colgando) o un hub.
@@ -83,9 +104,15 @@ export function crearCaso(semilla) {
   const app = r.de(tcp ? [200, 512, 800, 1200, 1460] : [40, 120, 512, 1200, 1472]);
   const cab = tcp ? 20 : 8, routers = r.n(1, 5), ttl = r.de([64, 128]);
 
+  const pdu = r.de(PDUS), direccion = r.de(DIRECCIONES);
+  // Añadidos tras revisar las hojas de ejercicios 4, 5 y 6 (se sortean al final para no cambiar lo anterior).
+  const f1 = r.de(FUNCIONES), f2 = r.de(FUNCIONES.filter(f => f[1] !== f1[1]));
+  const incidencia = r.de(INCIDENCIAS), servicio = r.de(SERVICIOS), protoCapa = r.de(PROTOCOLOS_CAPA), variante = r.de(VARIANTES);
+
   return {
     semilla,
-    capas: { dispositivos, pdu: r.de(PDUS), direccion: r.de(DIRECCIONES) },
+    extra: { funciones: [f1, f2], incidencia, servicio, protoCapa, variante },
+    capas: { dispositivos, pdu, direccion },
     encap: { tcp, app, cab, segmento: app + cab, paquete: app + cab + 20, trama: app + cab + 20 + 18, protocolo: tcp ? 6 : 17, routers, ttl, tramas: routers + 1, ttlFinal: ttl - routers },
     red: { interfaces, colision, difusion: interfaces.length },
     trama: { destino, origen, tipo: protocolo.hex, protocolo: protocolo.nombre, esDifusion: destino.every(b => b === 255), datos, relleno: Math.max(0, 46 - datos), tamano: 14 + Math.max(46, datos) + 4, volcado, octeto: origen[5], tipoDecimal: parseInt(protocolo.hex, 16) },
@@ -100,19 +127,25 @@ const es = (n, sing, plur) => `${n} ${n === 1 ? sing : plur}`;
 
 /** Devuelve la lista de apartados con { id, ok, correcta, porque } y los aciertos. */
 export function corregir(caso, resp) {
-  const { red, trama, csma, capas, encap } = caso;
+  const { red, trama, csma, capas, encap, extra } = caso;
   const partes = red.interfaces.map((i, k) => i.tipo === 'hub'
     ? `interfaz ${k + 1}: 1 (el hub y todo lo que cuelga de él)`
     : `interfaz ${k + 1}: ${i.pcs + (i.hub ? 1 : 0) + 1} (${es(i.pcs, 'puerto con PC', 'puertos con PC')}${i.hub ? ', 1 puerto con el hub' : ''} y 1 puerto hacia el router)`);
   const que = csma.quien === 'chocan' ? 'Vuelven a chocar' : `Envía primero ${csma.quien}`;
   const lista = [
     ...capas.dispositivos.map((d, i) => ({ id: 'disp' + i, ok: entero(resp['disp' + i]) === d.capa, correcta: `Capa ${d.capa} (${CAPAS[d.capa - 1]})`, porque: d.porque })),
+    ...extra.funciones.map((f, i) => ({ id: 'fun' + i, ok: entero(resp['fun' + i]) === f[1], correcta: `Capa ${f[1]} (${CAPAS[f[1] - 1]})`, porque: 'De abajo arriba: física (señal), enlace (tramas, MAC, acceso al medio), red (IP, rutas), transporte (puertos, fiabilidad), sesión (diálogo), presentación (formato, cifrado) y aplicación (protocolos de servicio).' })),
+    { id: 'incidencia', ok: entero(resp.incidencia) === extra.incidencia[1], correcta: `Capa ${extra.incidencia[1]} (${CAPAS[extra.incidencia[1] - 1]})`, porque: extra.incidencia[2] },
     { id: 'pdu', ok: resp.pdu === capas.pdu.pdu, correcta: capas.pdu.pdu, porque: 'De arriba abajo: datos, segmento (TCP) o datagrama (UDP), paquete, trama y bits.' },
     { id: 'direccion', ok: resp.direccion === capas.direccion.dir, correcta: capas.direccion.dir, porque: capas.direccion.porque },
     { id: 'segmento', ok: entero(resp.segmento) === encap.segmento, correcta: String(encap.segmento), porque: `${encap.app} + ${encap.cab} de cabecera ${encap.tcp ? 'TCP' : 'UDP'} = ${encap.segmento} bytes.` },
     { id: 'paquete', ok: entero(resp.paquete) === encap.paquete, correcta: String(encap.paquete), porque: `${encap.segmento} + 20 de cabecera IPv4 = ${encap.paquete} bytes.` },
     { id: 'tramaTam', ok: entero(resp.tramaTam) === encap.trama, correcta: String(encap.trama), porque: `${encap.paquete} + 14 de cabecera Ethernet + 4 de FCS = ${encap.trama} bytes.` },
     { id: 'protoIP', ok: entero(resp.protoIP) === encap.protocolo, correcta: String(encap.protocolo), porque: 'El campo Protocolo de IPv4 vale 1 para ICMP, 6 para TCP y 17 para UDP.' },
+    { id: 'puerto', ok: entero(resp.puerto) === extra.servicio[1], correcta: String(extra.servicio[1]), porque: `${extra.servicio[0]} usa el puerto ${extra.servicio[1]} del servidor, sobre ${extra.servicio[2]}.` },
+    { id: 'transporte', ok: resp.transporte === extra.servicio[2], correcta: extra.servicio[2], porque: extra.servicio[2] === 'UDP' ? 'Es un servicio de consultas cortas: usa UDP, sin conexión y con menos retardo.' : 'Necesita que todo llegue y en orden: usa TCP, orientado a conexión y fiable.' },
+    { id: 'protoCapa', ok: resp.protoCapa === extra.protoCapa[1], correcta: extra.protoCapa[1], porque: 'Acceso a la red: Ethernet y Wi‑Fi. Internet: IP e ICMP. Transporte: TCP y UDP. Aplicación: HTTP, DNS, DHCP, SMTP…' },
+    { id: 'cambian', ok: resp.cambian === 'mac', correcta: 'Las direcciones MAC', porque: 'Las MAC solo tienen sentido dentro de cada red local y cambian en cada salto; las IP de origen y destino se mantienen de extremo a extremo.' },
     { id: 'tramas', ok: entero(resp.tramas) === encap.tramas, correcta: String(encap.tramas), porque: `Cada router desencapsula hasta IP y crea una trama nueva para el siguiente enlace: ${encap.routers} ${encap.routers === 1 ? 'router' : 'routers'} son ${encap.tramas} enlaces y ${encap.tramas} tramas. Las MAC cambian en cada salto; las IP no.` },
     { id: 'ttlFinal', ok: entero(resp.ttlFinal) === encap.ttlFinal, correcta: String(encap.ttlFinal), porque: `Cada router resta 1 al TTL: ${encap.ttl} − ${encap.routers} = ${encap.ttlFinal}.` },
     { id: 'colision', ok: entero(resp.colision) === red.colision, correcta: String(red.colision), porque: `Cada puerto usado de un switch es un dominio de colisión; un hub es uno solo para todos sus puertos. ${partes.join('; ')}.` },
@@ -123,8 +156,11 @@ export function corregir(caso, resp) {
     { id: 'esDifusion', ok: resp.esDifusion === (trama.esDifusion ? 'si' : 'no'), correcta: trama.esDifusion ? 'Sí' : 'No', porque: trama.esDifusion ? 'El destino es FF-FF-FF-FF-FF-FF, la dirección de difusión: la reciben todos los equipos del dominio de difusión.' : 'El destino no es FF-FF-FF-FF-FF-FF, así que no es una difusión.' },
     { id: 'relleno', ok: entero(resp.relleno) === trama.relleno, correcta: String(trama.relleno), porque: trama.relleno ? `El campo de datos mide como mínimo 46 bytes: 46 − ${trama.datos} = ${trama.relleno} bytes de relleno.` : `Los datos ya miden ${trama.datos} bytes, 46 o más: no hace falta relleno.` },
     { id: 'tamano', ok: entero(resp.tamano) === trama.tamano, correcta: String(trama.tamano), porque: `6 + 6 + 2 + ${Math.max(46, trama.datos)} + 4 = ${trama.tamano} bytes. El preámbulo y el SFD no se cuentan.` },
+    { id: 'enCable', ok: entero(resp.enCable) === trama.tamano + 8, correcta: String(trama.tamano + 8), porque: `En el cable van además los 7 bytes del preámbulo y 1 del SFD: ${trama.tamano} + 8 = ${trama.tamano + 8} bytes.` },
     { id: 'binario', ok: String(resp.binario ?? '').replace(/\s/g, '') === trama.octeto.toString(2).padStart(8, '0'), correcta: trama.octeto.toString(2).padStart(8, '0'), porque: `Cada cifra hexadecimal son 4 bits: ${hex2(trama.octeto)[0]} = ${parseInt(hex2(trama.octeto)[0], 16).toString(2).padStart(4, '0')} y ${hex2(trama.octeto)[1]} = ${parseInt(hex2(trama.octeto)[1], 16).toString(2).padStart(4, '0')}.` },
     { id: 'tipoDecimal', ok: entero(resp.tipoDecimal) === trama.tipoDecimal, correcta: String(trama.tipoDecimal), porque: `0x${trama.tipo} = ${[...trama.tipo].map((c, i) => `${parseInt(c, 16)}·16${['³', '²', '¹', '⁰'][i]}`).join(' + ')} = ${trama.tipoDecimal}. Es 1536 o más, así que el campo es un Tipo (Ethernet II) y no una longitud.` },
+    { id: 'varVel', ok: resp.varVel === extra.variante[1], correcta: extra.variante[1], porque: `El número del principio es la velocidad en Mbit/s (con G, en Gbit/s): ${extra.variante[0]} va a ${extra.variante[1]}.` },
+    { id: 'varMedio', ok: resp.varMedio === extra.variante[2], correcta: extra.variante[2], porque: 'El final indica el medio: T y TX, par trenzado; SX y SR, fibra multimodo; LR, fibra monomodo; FX, fibra; un número (2, 5), coaxial.' },
     { id: 'tope', ok: entero(resp.tope) === csma.tope, correcta: String(csma.tope), porque: csma.n > 10 ? `El exponente deja de crecer a partir de 10: 2¹⁰ − 1 = 1023, aunque sea la colisión número ${csma.n}.` : `Tras la colisión número ${csma.n} se elige entre 0 y 2^${csma.n} − 1 = ${csma.tope} ranuras.` },
     { id: 'valores', ok: entero(resp.valores) === csma.valores, correcta: String(csma.valores), porque: `De 0 a ${csma.tope} hay ${csma.valores} valores posibles (el 0 también cuenta).` },
     { id: 'espera', ok: Math.abs(decimal(resp.espera) - csma.espera) < 0.06, correcta: String(csma.espera).replace('.', ',') + ' µs', porque: `Una ranura son 512 tiempos de bit: 51,2 µs a 10 Mbit/s. ${csma.tope} × 51,2 = ${String(csma.espera).replace('.', ',')} µs.` },
@@ -136,6 +172,6 @@ export function corregir(caso, resp) {
 
 /** Respuestas correctas de un caso, con el formato que acepta corregir(). */
 export function solucion(caso) {
-  const { red, trama, csma, capas, encap } = caso;
-  return { ...Object.fromEntries(capas.dispositivos.map((d, i) => ['disp' + i, d.capa])), pdu: capas.pdu.pdu, direccion: capas.direccion.dir, segmento: encap.segmento, paquete: encap.paquete, tramaTam: encap.trama, protoIP: encap.protocolo, tramas: encap.tramas, ttlFinal: encap.ttlFinal, colision: red.colision, difusion: red.difusion, destino: macTexto(trama.destino), origen: macTexto(trama.origen), protocolo: trama.protocolo, esDifusion: trama.esDifusion ? 'si' : 'no', relleno: trama.relleno, tamano: trama.tamano, binario: trama.octeto.toString(2).padStart(8, '0'), tipoDecimal: trama.tipoDecimal, tope: csma.tope, valores: csma.valores, espera: String(csma.espera).replace('.', ','), quien: csma.quien, aplica: csma.enlace.aplica ? 'si' : 'no' };
+  const { red, trama, csma, capas, encap, extra } = caso;
+  return { fun0: extra.funciones[0][1], fun1: extra.funciones[1][1], incidencia: extra.incidencia[1], puerto: extra.servicio[1], transporte: extra.servicio[2], protoCapa: extra.protoCapa[1], cambian: 'mac', enCable: trama.tamano + 8, varVel: extra.variante[1], varMedio: extra.variante[2], ...Object.fromEntries(capas.dispositivos.map((d, i) => ['disp' + i, d.capa])), pdu: capas.pdu.pdu, direccion: capas.direccion.dir, segmento: encap.segmento, paquete: encap.paquete, tramaTam: encap.trama, protoIP: encap.protocolo, tramas: encap.tramas, ttlFinal: encap.ttlFinal, colision: red.colision, difusion: red.difusion, destino: macTexto(trama.destino), origen: macTexto(trama.origen), protocolo: trama.protocolo, esDifusion: trama.esDifusion ? 'si' : 'no', relleno: trama.relleno, tamano: trama.tamano, binario: trama.octeto.toString(2).padStart(8, '0'), tipoDecimal: trama.tipoDecimal, tope: csma.tope, valores: csma.valores, espera: String(csma.espera).replace('.', ','), quien: csma.quien, aplica: csma.enlace.aplica ? 'si' : 'no' };
 }
