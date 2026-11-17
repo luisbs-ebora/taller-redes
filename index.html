@@ -30,22 +30,21 @@
 <body>
   <a class="saltar" href="#contenido">Saltar al contenido</a>
   <header class="cabecera">
+    <button class="btn-lateral" id="btn-lateral" type="button" aria-controls="lateral" aria-expanded="false" aria-label="Mostrar el menú">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+      <span>Menú</span>
+    </button>
     <a class="marca" href="#/">
       <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="12" y="3" width="8" height="7" rx="1.5" fill="var(--azul)"/><rect x="3" y="22" width="8" height="7" rx="1.5" fill="var(--ambar)"/><rect x="12" y="22" width="8" height="7" rx="1.5" fill="var(--ambar)"/><rect x="21" y="22" width="8" height="7" rx="1.5" fill="var(--ambar)"/><path d="M16 10v6M7 22v-6h18v6M16 16v6" stroke="var(--tinta)" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>
       <span><b>Taller de Redes</b><small>1.º SMR · Redes locales</small></span>
     </a>
-    <nav class="menu" aria-label="Secciones">
-      <a href="#/" data-ruta="inicio">Inicio</a>
-      <a href="#/animado" data-ruta="animado">Red animada</a>
-      <a href="#/mapas" data-ruta="mapas">Mapas</a>
-      <a href="#/rack" data-ruta="rack">Armario rack</a>
-      <a href="#/practica" data-ruta="practica">Práctica</a>
-      <a href="#/examen" data-ruta="examen">Examen</a>
-    </nav>
   </header>
-  <main id="contenido" tabindex="-1">
-    <div class="cargando">Cargando…</div>
-  </main>
+  <div class="marco">
+    <nav class="lateral" id="lateral" aria-label="Temas y secciones" inert></nav>
+    <main id="contenido" tabindex="-1">
+      <div class="cargando">Cargando…</div>
+    </main>
+  </div>
   <footer class="pie">
     <span>Redes locales · Ébora Formación</span>
     <a href="#/creditos">Créditos</a>

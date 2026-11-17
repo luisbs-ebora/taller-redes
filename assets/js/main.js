@@ -1,6 +1,8 @@
 // main.js — Enrutador de la web (rutas con #/…). Cada vista devuelve { el, montado?, destruir? }.
 import { h } from './util.js';
 import { vistaInicio } from './vistas/inicio.js';
+import { vistaTema } from './vistas/temas.js';
+import { crearLateral } from './lateral.js';
 import { vistaAnimado } from './vistas/animado.js';
 import { vistaDisenio } from './vistas/disenio.js';
 import { vistaMapas } from './vistas/mapas.js';
@@ -23,6 +25,7 @@ function vistaCreditos() {
 const RUTAS = [
   [/^$/, () => vistaInicio()],
   [/^creditos$/, () => vistaCreditos()],
+  [/^tema\/([\w-]+)$/, m => vistaTema(m[1])],
   [/^animado$/, () => vistaAnimado(ESCENA_RED)],
   [/^rack$/, () => vistaAnimado(ESCENA_RACK)],
   [/^mapas$/, () => vistaMapas()],
@@ -39,10 +42,7 @@ async function navegar() {
   if (actual && actual.destruir) { try { actual.destruir(); } catch (e) { console.error(e); } }
   actual = null;
   main.replaceChildren(h('div.cargando', 'Cargando…'));
-  const seccion = ruta === '' ? 'inicio' : ruta.split('/')[0];
-  document.querySelectorAll('.menu a').forEach(a => {
-    if (a.dataset.ruta === seccion) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
-  });
+  if (lateral) lateral.actualizar(ruta);
   try {
     const r = RUTAS.find(([re]) => re.test(ruta));
     if (!r) throw new Error('Esta página no existe.');
@@ -60,6 +60,16 @@ async function navegar() {
   main.focus({ preventScroll: true });
 }
 
-import('./config.js').then(c => { if (!c.EXAMEN_ACTIVO) document.querySelector('.menu a[data-ruta="examen"]')?.remove(); });
+// El menú lateral se monta aparte: si fallara, la web sigue funcionando sin él. El examen solo sale en el menú cuando está activo.
+let lateral = null;
+const rutaActual = () => decodeURIComponent(location.hash.replace(/^#\/?/, '')).replace(/\/$/, '');
+import('./config.js').then(c => c.EXAMEN_ACTIVO, () => false).then(activo => {
+  try {
+    lateral = crearLateral(document.getElementById('lateral'), document.getElementById('btn-lateral'),
+      activo ? [{ rotulo: 'Evaluación', items: [{ href: '#/examen', titulo: 'Examen' }] }] : []);
+    lateral.actualizar(rutaActual());
+  } catch (e) { console.error(e); document.getElementById('btn-lateral').hidden = true; }
+});
+
 window.addEventListener('hashchange', navegar);
 navegar();
