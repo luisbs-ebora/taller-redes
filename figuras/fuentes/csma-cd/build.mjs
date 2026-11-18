@@ -176,6 +176,15 @@ const CSS = `
 .cs-text{font-family:var(--anatomy-mono);font-weight:700;fill:#dfe7e1;letter-spacing:.02em}
 .cs-led,.cs-col{fill:#25262e;stroke:#0e0e12;stroke-width:.8px}
 .cs-rotulo{align-self:center;font:700 14px var(--f-mono);color:var(--tinta-2);margin-right:2px}
+/* Pantalla completa: solo la lámina y los botones, para el proyector */
+.iso-figure:fullscreen{box-sizing:border-box;width:100vw;height:100vh;margin:0;padding:22px 26px 20px;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;gap:16px;align-items:stretch;background:#f4ead8 radial-gradient(circle,rgba(29,27,36,.07) 1.2px,transparent 1.4px) 0 0/22px 22px}
+.iso-figure:fullscreen .iso-legend,.iso-figure:fullscreen figcaption{display:none}
+.iso-figure:fullscreen .iso-plate{min-height:0;display:flex;flex-direction:column;padding:44px 18px 48px}
+.iso-figure:fullscreen .iso-stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+.iso-figure:fullscreen .iso-svg{width:auto;height:auto;max-width:100%;max-height:100%;aspect-ratio:720/430;flex:1 1 auto}
+.iso-figure:fullscreen .fig-controles{justify-content:center;font-size:19px}
+.iso-figure:fullscreen .fig-controles button{padding:13px 19px}
+.iso-figure:fullscreen .iso-plate-corner{font-size:17px}
 .cs-led[data-on]{fill:#ffd23f}
 .cs-col[data-on]{fill:#ff4d3d}
 .cs-rotulo{--anatomy-mid:#e4e6ee}
@@ -307,6 +316,22 @@ csStations.forEach((g, i) => g.addEventListener("click", () => csSend([i])));
 for (const b of document.querySelectorAll(".cs-controls [data-send]")) b.addEventListener("click", () => csSend(b.dataset.send.split("").map(Number)));
 for (const b of csRitmoBtns) b.addEventListener("click", () => csPonRitmo(Number(b.dataset.ritmo)));
 csPausaBtn.addEventListener("click", () => csPausa(!csPaused));
+// Pantalla completa: la lámina con sus botones ocupa toda la pantalla (tecla F; Esc para salir)
+const csFigura = csStage.closest(".iso-figure"), csGrandeBtn = document.querySelector(".cs-controls [data-grande]");
+function csGrande() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else csFigura.requestFullscreen().then(() => csStage.focus({ preventScroll: true })).catch(() => {});
+}
+if (csFigura.requestFullscreen) {
+  csGrandeBtn.addEventListener("click", csGrande);
+  document.addEventListener("fullscreenchange", () => {
+    const on = document.fullscreenElement === csFigura;
+    csGrandeBtn.setAttribute("aria-pressed", String(on));
+    csGrandeBtn.textContent = on ? "Salir de pantalla completa" : "Pantalla completa";
+  });
+  // La F vale con el foco en el dibujo o en cualquier botón de la lámina
+  csFigura.addEventListener("keydown", (event) => { if (event.key.toLowerCase() === "f" && !event.ctrlKey && !event.metaKey && !event.altKey) csGrande(); });
+} else csGrandeBtn.hidden = true;
 csStage.addEventListener("keydown", (event) => {
   const i = "abcd".indexOf(event.key.toLowerCase());
   if (i >= 0) csSend([i]);
@@ -324,7 +349,8 @@ csDraw();
 const c = (v, d = 1) => v.toFixed(d).replace(".", ",");
 const controls = `<div class="cs-controls fig-controles"><div class="fig-grupo" role="group" aria-label="Quién envía"><button type="button" data-send="0">Envía A</button><button type="button" data-send="02">A y C a la vez</button><button type="button" data-send="0123">Los cuatro a la vez</button></div>` +
   `<div class="fig-grupo" role="group" aria-label="Velocidad de la animación"><span class="cs-rotulo">Velocidad</span><button type="button" data-ritmo="1" aria-pressed="true">Normal</button><button type="button" data-ritmo="0.4" aria-pressed="false">Lenta</button><button type="button" data-ritmo="0.15" aria-pressed="false">Muy lenta</button>` +
-  `<button type="button" data-pausa aria-pressed="false">Pausa</button></div></div>`;
+  `<button type="button" data-pausa aria-pressed="false">Pausa</button></div>` +
+  `<button type="button" data-grande aria-pressed="false">Pantalla completa</button></div>`;
 const card = k
   .plateHtml({
     fig: "Fig 2",
@@ -338,8 +364,8 @@ const card = k
     ],
     caption:
       `Cuatro equipos comparten un hub 10BASE-T en semidúplex: forman un único dominio de colisión. Cada cable lleva un par de ida y otro de vuelta. ¶Antes de enviar, el equipo escucha el medio; si está libre, transmite y sigue escuchando, y el hub repite la señal por todos los demás puertos. Si dos transmiten a la vez, las señales chocan en el hub, que propaga la colisión a todos sus puertos. ¶El equipo que oye algo por su par de vuelta mientras transmite ha detectado la colisión: deja de transmitir, envía la señal de atasco (jam) de 32 bits y espera un número al azar de ranuras, entre 0 y 2ⁿ − 1 tras la colisión número n (el exponente deja de crecer a partir de 10). Si los dos eligen lo mismo, vuelven a chocar; a los 16 intentos la trama se descarta. ¶Al acabar la espera vuelve a escuchar y, si el medio está ocupado, aguarda a que quede libre más la pausa entre tramas (96 tiempos de bit). ¶` +
-      `La ranura real dura 512 tiempos de bit, 51,2 µs a 10 Mbit/s, lo mismo que tarda en enviarse la trama mínima de 64 bytes; aquí va a cámara lenta y dura ${c(TIMING.slot)} s, lo que tarda la señal en ir y volver entre los dos equipos más lejanos. Con **Lenta** y **Muy lenta** todo va todavía más despacio, y con **Pausa** se queda quieto para mirarlo.`,
-    body: `<div class="iso-stage" tabindex="0" role="group" aria-label="CSMA/CD: pulsa un equipo o las teclas A, B, C y D para que envíe; la barra espaciadora hace que A y C envíen a la vez; V cambia la velocidad y P pone o quita la pausa">${svg}</div>`,
+      `La ranura real dura 512 tiempos de bit, 51,2 µs a 10 Mbit/s, lo mismo que tarda en enviarse la trama mínima de 64 bytes; aquí va a cámara lenta y dura ${c(TIMING.slot)} s, lo que tarda la señal en ir y volver entre los dos equipos más lejanos. Con **Lenta** y **Muy lenta** todo va todavía más despacio, y con **Pausa** se queda quieto para mirarlo. **Pantalla completa** deja solo el dibujo y los botones, para verlo en la pantalla grande.`,
+    body: `<div class="iso-stage" tabindex="0" role="group" aria-label="CSMA/CD: pulsa un equipo o las teclas A, B, C y D para que envíe; la barra espaciadora hace que A y C envíen a la vez; V cambia la velocidad, P pone o quita la pausa y F pone la pantalla completa">${svg}</div>`,
   })
   .replace("</div><figcaption", `</div>${controls}<figcaption`);
 
