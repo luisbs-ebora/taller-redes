@@ -16,6 +16,7 @@ export const INDICE = {
         items: [
           { href: '#/rack', titulo: 'Armario rack', texto: 'Monta el armario de un aula de 20 puestos: panel de parcheo, pasahilos, switch, SAI y regleta, cada cosa en su U.', chip: 'Disponible' },
           { href: 'figuras/fibra-optica.html', titulo: 'Fibra óptica por dentro', texto: 'Una fibra cortada a lo largo: gira el láser, mira cómo rebota la luz en el núcleo, cuándo se escapa y por qué el monomodo llega más lejos.', chip: 'Disponible' },
+          { href: 'figuras/wifi.html', titulo: 'La Wi‑Fi por dentro', texto: 'Un piso visto desde arriba: mueve el móvil de habitación en habitación, cambia de banda y pon vecinos en tu canal para ver por qué la señal se cae.', chip: 'Disponible' },
           { href: '#/medio', titulo: 'Práctica: elige el medio', texto: 'Cable, fibra o aire: decide qué medio necesita cada cliente y coloca tu Wi‑Fi de 2,4 GHz en un canal donde no te pises con los vecinos.', chip: 'Sin nota' },
           { href: '#/latiguillo', titulo: 'Práctica: haz el latiguillo', texto: 'Ordena los ocho hilos en los dos RJ45 según la norma, crímpalos y pásales el tester. Después, diagnostica cables con hilos abiertos, cruzados o en corto.', chip: 'Sin nota' },
           { href: 'figuras/rj45.html', titulo: 'El RJ45 por dentro', texto: 'Un conector cortado a lo largo en la prensa de crimpar: mira cómo la cuchilla atraviesa el aislante y qué pasa si el hilo no llega al fondo o no aprietas del todo.', chip: 'Disponible' }
