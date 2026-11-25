@@ -28,6 +28,14 @@ export const INDICE = {
         items: [
           { href: 'figuras/csma-cd.html', titulo: 'CSMA/CD con un hub', texto: 'Cuatro equipos y un hub: haz que envíen a la vez y sigue la colisión, la señal de atasco y la espera al azar de cada uno.', chip: 'Disponible' },
           { href: '#/analiza', titulo: 'Práctica: analiza la red', texto: 'Ocho bloques con un caso distinto cada vez, para repasar todo el tema: tipos de red, topologías, binario y máscaras, capas, encapsulamiento, dominios, la trama Ethernet y CSMA/CD. La web te corrige.', chip: 'Sin nota' }
+        ] },
+      { id: 'par2', n: 'Tema 2', titulo: 'Integración de equipos en redes cableadas e inalámbricas',
+        resumen: 'Medios físicos, cableado estructurado, cables y redes inalámbricas (secciones 1 a 4), con una práctica de repaso y lo que ya hay en el tema de SMR.',
+        items: [
+          { href: '#/analiza-medio', titulo: 'Práctica: analiza el medio', texto: 'Cinco bloques con un caso distinto cada vez: velocidades y Shannon, cables y fibra, cableado estructurado, informes de un certificador y Wi‑Fi.', chip: 'Disponible' },
+          { href: '#/latiguillo', titulo: 'Práctica: haz el latiguillo', texto: 'Crimpa un directo, un cruzado o un cable de consola y pásale el tester. Tiene un bloque para ASIR: qué cable une cada pareja de equipos, qué comprobador hace falta y 9600 8N1.', chip: 'Disponible' },
+          { href: 'figuras/fibra-optica.html', titulo: 'Fibra óptica por dentro', texto: 'Figura de SMR, como repaso: la luz rebotando en el núcleo y por qué la monomodo llega más lejos.', chip: 'Repaso' },
+          { href: 'figuras/wifi.html', titulo: 'La Wi‑Fi por dentro', texto: 'Figura de SMR, como repaso: atenuación por paredes, 2,4 frente a 5 GHz y canales que se solapan.', chip: 'Repaso' },
         ] }
     ] }
   ]

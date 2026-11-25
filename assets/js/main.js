@@ -7,6 +7,7 @@ import { vistaAnimado } from './vistas/animado.js';
 import { vistaDisenio } from './vistas/disenio.js';
 import { vistaMapas } from './vistas/mapas.js';
 import { vistaAnaliza } from './vistas/analiza.js';
+import { vistaAnalizaMedio } from './vistas/analizaMedio.js';
 import { vistaMedio } from './vistas/medio.js';
 import { vistaLatiguillo } from './vistas/latiguillo.js';
 import { ESCENA_RED, ESCENA_RACK } from './animado/escenas.js';
@@ -30,6 +31,7 @@ const RUTAS = [
   [/^rack$/, () => vistaAnimado(ESCENA_RACK)],
   [/^mapas$/, () => vistaMapas()],
   [/^analiza(\?.*)?$/, () => vistaAnaliza()],
+  [/^analiza-medio(\?.*)?$/, () => vistaAnalizaMedio()],
   [/^medio$/, () => vistaMedio()],
   [/^latiguillo$/, () => vistaLatiguillo()],
   [/^(practica|examen)$/, m => vistaDisenio(m[1])],
